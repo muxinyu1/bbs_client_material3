@@ -27,9 +27,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ExpandableCard(
     modifier: Modifier,
-    header: @Composable RowScope.() -> Unit,
-    foldedContent: @Composable ColumnScope.() -> Unit,
-    arrowColor: Color
+    header: @Composable() (RowScope.() -> Unit),
+    foldedContent: @Composable() (ColumnScope.() -> Unit),
 ) {
     var expand by remember { mutableStateOf(false) } // Expand State
     val rotationState by animateFloatAsState(if (expand) 180f else 0f) // Rotation State
@@ -67,7 +66,6 @@ fun ExpandableCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
-                        tint = arrowColor, // Icon Color
                         contentDescription = "Drop Down Arrow"
                     )
                 }
@@ -81,13 +79,12 @@ fun ExpandableCard(
     }
 }
 
+
 @Composable
 @Preview(showBackground = true)
 fun ExpandableCardPreview() {
     ExpandableCard(
         modifier = Modifier,
-        header = { Text(text = "头部") },
-        foldedContent = { Text(text = "一些文本") },
-        arrowColor = Color.Black
-    )
+        header = { Text(text = "头部") }
+    ) { Text(text = "一些文本") }
 }

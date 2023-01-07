@@ -8,21 +8,18 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -32,10 +29,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mxy.bbs_client.program.ProgramState
+import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
+import com.mxy.bbs_client.program.viewmodel.PostThumbnailViewModel
+import com.mxy.bbs_client.program.viewmodel.UserInfoViewModel
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Edit
+import compose.icons.feathericons.LogOut
 import compose.icons.feathericons.Send
 import compose.icons.feathericons.Star
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,10 @@ private const val MyCollections = "我的收藏"
 private const val MyPosts = "我的帖子"
 
 private const val EditInfo = "编辑信息"
+
+private const val LogOut = "退出登录"
+
+private const val ConfirmLogOut = "确认"
 
 private const val InputNewNickname = "新昵称"
 
@@ -106,10 +111,6 @@ private fun applyChanges(context: Context) {
                 FileUtils.copyURLToFile(URL(avatarUrl), avatarTmpFile)
                 avatarTmpFile
             }
-            Log.d(
-                "applyChanges",
-                "newNickName = ${ProgramState.UserInfoState.newNickname}, newPersonalSign = ${ProgramState.UserInfoState.newPersonalSign}, avatar = ${avatarFile.absolutePath}"
-            )
             val userInfoResponse = Client.updateUserInfo(
                 ProgramState.UserInfoState.username,
                 ProgramState.UserInfoState.newNickname,
@@ -127,120 +128,138 @@ private fun applyChanges(context: Context) {
     }
 }
 
+@Composable
+fun UserAvatarNicknameAndSign(
+    avatarUrl: String,
+    nickname: String,
+    personalSign: String,
+    modifier: Modifier
+) {
+    Row(modifier = modifier) {
+        UserAvatar(
+            avatarUrl = avatarUrl,
+            modifier = Modifier
+                .align(alignment = CenterVertically)
+                .size(100.dp)
+        )
+        Column {
+            UserNickname(
+                modifier = Modifier.padding(10.dp),
+                nickname = nickname
+            )
+            PersonalSign(sign = personalSign, modifier = Modifier.padding(10.dp))
+        }
+    }
+}
+
+@Composable
+private fun PersonalSign(
+    sign: String,
+    modifier: Modifier
+) {
+    Text(
+        text = sign,
+        modifier = modifier,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Light
+    )
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun UserInfoCard(
     modifier: Modifier,
-    username: String
+    userInfoViewModel: UserInfoViewModel,
+    mineScreenViewModel: MineScreenViewModel
 ) {
-    val userInfoState = remember {
-        mutableStateOf(DefaultUserInfo)
-    }
+    val userInfoState by userInfoViewModel.userInfoState.collectAsState()
     Column(modifier = modifier) {
-        UserAvatar(
-            avatarUrl = userInfoState.value.avatarUrl!!,
-            modifier = Modifier
-                .align(alignment = CenterHorizontally)
-                .size(100.dp)
-        )
-        UserNickname(
-            modifier = Modifier.align(alignment = CenterHorizontally),
-            nickname = userInfoState.value.nickname!!
+        UserAvatarNicknameAndSign(
+            avatarUrl = userInfoState.avatarUrl!!,
+            nickname = userInfoState.nickname!!,
+            personalSign = userInfoState.personalSign!!,
+            modifier = Modifier.padding(10.dp)
         )
         //我的帖子
         ExpandableCard(
             modifier = Modifier.padding(10.dp),
             header = {
-                Row {
-                    Icon(
-                        FeatherIcons.Send,
-                        contentDescription = "My Posts",
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .align(alignment = CenterVertically)
-                    )
-                    Text(
-                        text = MyPosts,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        modifier = Modifier.align(alignment = CenterVertically)
-                    )
-                }
-            },
-            foldedContent = {
-                UserPosts(postIds = userInfoState.value.myPosts, modifier = Modifier.padding(5.dp))
-            },
-            arrowColor = Color.Black
-        )
+                Header(imageVector = FeatherIcons.Send, text = MyPosts)
+            }
+        ) {
+            UserPosts(postIds = userInfoState.myPosts, modifier = Modifier.padding(5.dp))
+        }
         //我的收藏
         ExpandableCard(
             modifier = Modifier.padding(10.dp),
             header = {
-                Row {
-                    Icon(
-                        FeatherIcons.Star,
-                        contentDescription = "My Fav",
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .align(alignment = CenterVertically)
-                    )
-                    Text(
-                        text = MyCollections,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        modifier = Modifier.align(alignment = CenterVertically)
-                    )
-                }
-            },
-            foldedContent = {
-                UserPosts(
-                    postIds = userInfoState.value.myCollections,
-                    modifier = Modifier.padding(5.dp)
-                )
-            },
-            arrowColor = Color.Black
-        )
+                Header(imageVector = FeatherIcons.Star, text = MyCollections)
+            }
+        ) {
+            UserPosts(
+                postIds = userInfoState.myCollections,
+                modifier = Modifier.padding(5.dp)
+            )
+        }
         //编辑信息
         ExpandableCard(
             modifier = Modifier.padding(10.dp),
             header = {
-                Row {
-                    Icon(
-                        FeatherIcons.Edit,
-                        contentDescription = "Edit Info",
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .align(alignment = CenterVertically)
-                    )
+                Header(imageVector = FeatherIcons.Edit, text = EditInfo)
+            }
+        ) {
+            EditUserInfo(
+                modifier = Modifier.padding(10.dp),
+                avatarUrl = userInfoState.avatarUrl!!
+            )
+        }
+        //退出登录
+        ExpandableCard(
+            modifier = Modifier.padding(10.dp),
+            header = {
+                Header(imageVector = FeatherIcons.LogOut, text = LogOut)
+            },
+            foldedContent = {
+                Button(
+                    modifier = Modifier
+                        .align(alignment = CenterHorizontally)
+                        .padding(10.dp),
+                    onClick = {
+                        mineScreenViewModel.logout()
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                ) {
                     Text(
-                        text = EditInfo,
-                        fontWeight = FontWeight.Bold,
+                        text = ConfirmLogOut,
                         fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(alignment = CenterVertically)
                     )
                 }
-            },
-            foldedContent = {
-                EditUserInfo(
-                    modifier = Modifier.padding(10.dp),
-                    avatarUrl = userInfoState.value.avatarUrl!!
-                )
-            },
-            arrowColor = Color.Black
+
+            }
         )
-    }
-    with(Utility.IOCoroutineScope) {
-        launch {
-            userInfoState.value = Client.getUserInfo(username).userInfo!!
-        }
+
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-@Preview
-fun UserInfoCardPreview() {
-    UserInfoCard(modifier = Modifier, username = "真想")
+fun Header(imageVector: ImageVector, text: String) {
+    Row {
+        Icon(
+            imageVector,
+            contentDescription = "Edit Info",
+            modifier = Modifier
+                .padding(5.dp)
+                .align(alignment = CenterVertically)
+        )
+        Text(
+            text = text,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            modifier = Modifier.align(alignment = CenterVertically)
+        )
+    }
 }
 
 @Composable
@@ -291,7 +310,11 @@ private fun UserNickname(
 private fun UserPosts(postIds: List<String>, modifier: Modifier) {
     Column(modifier = modifier) {
         for (postId in postIds) {
-            PostThumbnail(modifier = Modifier.padding(10.dp), postId = postId)
+            PostThumbnail(
+                modifier = Modifier.padding(10.dp),
+                postId = postId,
+                PostThumbnailViewModel(postId)
+            )
         }
     }
 }
@@ -359,12 +382,7 @@ private fun EditUserInfo(modifier: Modifier, avatarUrl: String) {
             onClick = {
                 applyChanges(context)
             },
-            border = BorderStroke(1.dp, Color.Black),
             shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color.Black
-            )
         ) {
             Text(
                 text = SubmitChanges,
@@ -379,14 +397,11 @@ private fun EditUserInfo(modifier: Modifier, avatarUrl: String) {
 @Composable
 fun PostThumbnail(
     modifier: Modifier,
-    postId: String
+    postId: String,
+    postThumbnailViewModel: PostThumbnailViewModel
 ) {
-    val postState = remember {
-        mutableStateOf(DefaultPost)
-    }
-    val userInfoState = remember {
-        mutableStateOf(DefaultUserInfo)
-    }
+    val postState by postThumbnailViewModel.postState.collectAsState()
+    val userInfoState by postThumbnailViewModel.userInfoState.collectAsState()
     OutlinedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -397,7 +412,7 @@ fun PostThumbnail(
         Row {
             Column {
                 AsyncImage(
-                    model = userInfoState.value.avatarUrl,
+                    model = userInfoState.avatarUrl,
                     contentDescription = "User Avatar",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -408,16 +423,16 @@ fun PostThumbnail(
                         .align(alignment = CenterHorizontally)
                 )
                 Text(
-                    text = userInfoState.value.nickname!!,
+                    text = userInfoState.nickname!!,
                     fontSize = 12.sp,
                     color = Color.Gray,
                     modifier = Modifier.align(alignment = CenterHorizontally)
                 )
             }
             Row {
-                if (postState.value.images.isNotEmpty()) {
+                if (postState.images.isNotEmpty()) {
                     AsyncImage(
-                        model = postState.value.images[0],
+                        model = postState.images[0],
                         contentDescription = "Post Img",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -428,7 +443,7 @@ fun PostThumbnail(
                     )
                 }
                 Text(
-                    text = postState.value.title!!,
+                    text = postState.title!!,
                     fontSize = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -438,12 +453,5 @@ fun PostThumbnail(
 
         }
         Spacer(modifier = Modifier.height(5.dp))
-
-    }
-    with(Utility.IOCoroutineScope) {
-        launch {
-            postState.value = Client.getPost(postId).post!!
-            userInfoState.value = Client.getUserInfo(postState.value.owner).userInfo!!
-        }
     }
 }
