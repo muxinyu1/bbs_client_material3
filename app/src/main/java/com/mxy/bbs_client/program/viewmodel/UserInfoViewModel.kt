@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class UserInfoViewModel(private var username: String): ViewModel() {
+class UserInfoViewModel(val username: String): ViewModel() {
     private val _userInfoState = MutableStateFlow(DefaultUserInfo)
     val userInfoState = _userInfoState.asStateFlow()
     init {

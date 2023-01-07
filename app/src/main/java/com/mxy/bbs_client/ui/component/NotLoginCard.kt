@@ -2,6 +2,9 @@ package com.mxy.bbs_client.ui.component
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.*
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -134,37 +138,51 @@ private fun login(
 fun NotLoginCard(
     modifier: Modifier,
     userInfoViewModel: UserInfoViewModel,
-    mineScreenViewModel: MineScreenViewModel
+    mineScreenViewModel: MineScreenViewModel,
+    visible: Boolean
 ) {
     val userInfoState by userInfoViewModel.userInfoState.collectAsState()
-    Column(modifier = modifier) {
-        //未登录用户头像和昵称
-        UserAvatarNicknameAndSign(
-            avatarUrl = userInfoState.avatarUrl!!,
-            nickname = userInfoState.nickname!!,
-            personalSign = userInfoState.personalSign!!,
-            modifier = Modifier.padding(10.dp)
-        )
-        //登录
-        ExpandableCard(
-            modifier = Modifier.padding(10.dp),
-            header = {
-                Header(imageVector = FeatherIcons.LogIn, text = LoginText)
-            },
-            foldedContent = {
-                Login(modifier = Modifier.padding(10.dp), mineScreenViewModel)
-            }
-        )
-        //注册
-        ExpandableCard(
-            modifier = Modifier.padding(10.dp),
-            header = {
-                Header(imageVector = FeatherIcons.PlusCircle, text = RegisterText)
-            },
-            foldedContent = {
-                SignUp(modifier = Modifier.padding(10.dp), mineScreenViewModel)
-            }
-        )
+    val density = LocalDensity.current
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically {
+            with(density) { -40.dp.roundToPx() }
+        } + expandVertically(
+            expandFrom = Alignment.Top
+        ) + fadeIn(
+            initialAlpha = 0.3f
+        ),
+        exit = slideOutVertically() + shrinkVertically() + fadeOut()
+    ) {
+        Column(modifier = modifier) {
+            //未登录用户头像和昵称
+            UserAvatarNicknameAndSign(
+                avatarUrl = userInfoState.avatarUrl!!,
+                nickname = userInfoState.nickname!!,
+                personalSign = userInfoState.personalSign!!,
+                modifier = Modifier.padding(10.dp)
+            )
+            //登录
+            ExpandableCard(
+                modifier = Modifier.padding(10.dp),
+                header = {
+                    Header(imageVector = FeatherIcons.LogIn, text = LoginText)
+                },
+                foldedContent = {
+                    Login(modifier = Modifier.padding(10.dp), mineScreenViewModel)
+                }
+            )
+            //注册
+            ExpandableCard(
+                modifier = Modifier.padding(10.dp),
+                header = {
+                    Header(imageVector = FeatherIcons.PlusCircle, text = RegisterText)
+                },
+                foldedContent = {
+                    SignUp(modifier = Modifier.padding(10.dp), mineScreenViewModel)
+                }
+            )
+        }
     }
 }
 

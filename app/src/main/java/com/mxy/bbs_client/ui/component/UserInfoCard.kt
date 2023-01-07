@@ -3,17 +3,18 @@ package com.mxy.bbs_client.ui.component
 import android.content.Context
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -22,9 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -47,55 +48,47 @@ import java.io.File
 import java.net.URL
 
 private const val MyCollections = "我的收藏"
-
 private const val MyPosts = "我的帖子"
-
 private const val EditInfo = "编辑信息"
-
 private const val LogOut = "退出登录"
-
 private const val ConfirmLogOut = "确认"
-
 private const val InputNewNickname = "新昵称"
-
 private const val InputNewPersonalSign = "新个人签名"
-
 private const val SubmitChanges = "提交更改"
-
 private const val PickAnImage = "image/*"
-
 private const val NicknameEmptyError = "昵称不能为空"
-
 private const val NicknameMaxLen = 15
-
 private const val PersonalSignMaxLen = 10
-
 private const val PersonalSignTooLongError = "个人签名长度不能超过$PersonalSignMaxLen"
-
 private const val NicknameTooLongError = "昵称长度不能超过$NicknameMaxLen"
-
 private const val ModifySuccess = "更改成功"
 
 
 @RequiresApi(Build.VERSION_CODES.O)
-private fun applyChanges(context: Context) {
-    if (ProgramState.UserInfoState.newNickname.isEmpty()) {
+private fun applyChanges(
+    context: Context,
+    username: String,
+    newNickname: String,
+    newPersonalSign: String,
+    newAvtarUri: Uri?,
+    mineScreenViewModel: MineScreenViewModel
+) {
+    if (newNickname.isEmpty()) {
         Toast.makeText(context, NicknameEmptyError, Toast.LENGTH_SHORT).show()
         return
     }
-    if (ProgramState.UserInfoState.newNickname.length > NicknameMaxLen) {
+    if (newNickname.length > NicknameMaxLen) {
         Toast.makeText(context, NicknameTooLongError, Toast.LENGTH_SHORT).show()
         return
     }
-    if (ProgramState.UserInfoState.newPersonalSign.length > PersonalSignMaxLen) {
+    if (newPersonalSign.length > PersonalSignMaxLen) {
         Toast.makeText(context, PersonalSignTooLongError, Toast.LENGTH_SHORT).show()
         return
     }
     with(Utility.IOCoroutineScope) {
         launch {
-            val avatarUri = ProgramState.UserInfoState.newAvatar
-            val avatarFile = if (avatarUri != null) {
-                val inputStream = context.contentResolver.openInputStream(avatarUri)
+            val avatarFile = if (newAvtarUri != null) {
+                val inputStream = context.contentResolver.openInputStream(newAvtarUri)
                 val avatarTmpFile = withContext(Dispatchers.IO) {
                     File.createTempFile("tmpAvatar", null)
                 }
@@ -104,23 +97,24 @@ private fun applyChanges(context: Context) {
             } else {
                 val avatarTmpFile =
                     withContext(Dispatchers.IO) {
-                        File.createTempFile("tmpAvatar", "png")
+                        File.createTempFile("tmpAvatar", null)
                     }
                 val avatarUrl =
-                    Client.getUserInfo(ProgramState.UserInfoState.username).userInfo!!.avatarUrl
+                    Client.getUserInfo(username).userInfo!!.avatarUrl
                 FileUtils.copyURLToFile(URL(avatarUrl), avatarTmpFile)
                 avatarTmpFile
             }
             val userInfoResponse = Client.updateUserInfo(
-                ProgramState.UserInfoState.username,
-                ProgramState.UserInfoState.newNickname,
-                ProgramState.UserInfoState.newPersonalSign,
+                username,
+                newNickname,
+                newPersonalSign,
                 avatarFile
             )
             with(Utility.UICoroutineScope) {
                 launch {
                     if (userInfoResponse.success != null && userInfoResponse.success) {
                         Toast.makeText(context, ModifySuccess, Toast.LENGTH_SHORT).show()
+                        mineScreenViewModel.refresh(username)
                     }
                 }
             }
@@ -170,76 +164,92 @@ private fun PersonalSign(
 fun UserInfoCard(
     modifier: Modifier,
     userInfoViewModel: UserInfoViewModel,
-    mineScreenViewModel: MineScreenViewModel
+    mineScreenViewModel: MineScreenViewModel,
+    visible: Boolean
 ) {
     val userInfoState by userInfoViewModel.userInfoState.collectAsState()
-    Column(modifier = modifier) {
-        UserAvatarNicknameAndSign(
-            avatarUrl = userInfoState.avatarUrl!!,
-            nickname = userInfoState.nickname!!,
-            personalSign = userInfoState.personalSign!!,
-            modifier = Modifier.padding(10.dp)
-        )
-        //我的帖子
-        ExpandableCard(
-            modifier = Modifier.padding(10.dp),
-            header = {
-                Header(imageVector = FeatherIcons.Send, text = MyPosts)
-            }
-        ) {
-            UserPosts(postIds = userInfoState.myPosts, modifier = Modifier.padding(5.dp))
-        }
-        //我的收藏
-        ExpandableCard(
-            modifier = Modifier.padding(10.dp),
-            header = {
-                Header(imageVector = FeatherIcons.Star, text = MyCollections)
-            }
-        ) {
-            UserPosts(
-                postIds = userInfoState.myCollections,
-                modifier = Modifier.padding(5.dp)
+    val density = LocalDensity.current
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically {
+            with(density) { -40.dp.roundToPx() }
+        } + expandVertically(
+            expandFrom = Alignment.Top
+        ) + fadeIn(
+            initialAlpha = 0.3f
+        ),
+        exit = slideOutVertically() + shrinkVertically() + fadeOut()
+    ) {
+        Column(modifier = modifier) {
+            UserAvatarNicknameAndSign(
+                avatarUrl = userInfoState.avatarUrl!!,
+                nickname = userInfoState.nickname!!,
+                personalSign = userInfoState.personalSign!!,
+                modifier = Modifier.padding(10.dp)
             )
-        }
-        //编辑信息
-        ExpandableCard(
-            modifier = Modifier.padding(10.dp),
-            header = {
-                Header(imageVector = FeatherIcons.Edit, text = EditInfo)
-            }
-        ) {
-            EditUserInfo(
+            //我的帖子
+            ExpandableCard(
                 modifier = Modifier.padding(10.dp),
-                avatarUrl = userInfoState.avatarUrl!!
-            )
-        }
-        //退出登录
-        ExpandableCard(
-            modifier = Modifier.padding(10.dp),
-            header = {
-                Header(imageVector = FeatherIcons.LogOut, text = LogOut)
-            },
-            foldedContent = {
-                Button(
-                    modifier = Modifier
-                        .align(alignment = CenterHorizontally)
-                        .padding(10.dp),
-                    onClick = {
-                        mineScreenViewModel.logout()
-                    },
-                    shape = RoundedCornerShape(10.dp),
-                ) {
-                    Text(
-                        text = ConfirmLogOut,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(alignment = CenterVertically)
-                    )
+                header = {
+                    Header(imageVector = FeatherIcons.Send, text = MyPosts)
                 }
-
+            ) {
+                UserPosts(postIds = userInfoState.myPosts, modifier = Modifier.padding(5.dp))
             }
-        )
+            //我的收藏
+            ExpandableCard(
+                modifier = Modifier.padding(10.dp),
+                header = {
+                    Header(imageVector = FeatherIcons.Star, text = MyCollections)
+                }
+            ) {
+                UserPosts(
+                    postIds = userInfoState.myCollections,
+                    modifier = Modifier.padding(5.dp)
+                )
+            }
+            //编辑信息
+            ExpandableCard(
+                modifier = Modifier.padding(10.dp),
+                header = {
+                    Header(imageVector = FeatherIcons.Edit, text = EditInfo)
+                }
+            ) {
+                EditUserInfo(
+                    modifier = Modifier.padding(10.dp),
+                    avatarUrl = userInfoState.avatarUrl!!,
+                    mineScreenViewModel = mineScreenViewModel,
+                    username = userInfoViewModel.username
+                )
+            }
+            //退出登录
+            ExpandableCard(
+                modifier = Modifier.padding(10.dp),
+                header = {
+                    Header(imageVector = FeatherIcons.LogOut, text = LogOut)
+                },
+                foldedContent = {
+                    Button(
+                        modifier = Modifier
+                            .align(alignment = CenterHorizontally)
+                            .padding(10.dp),
+                        onClick = {
+                            mineScreenViewModel.logout()
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                    ) {
+                        Text(
+                            text = ConfirmLogOut,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(alignment = CenterVertically)
+                        )
+                    }
 
+                }
+            )
+
+        }
     }
 }
 
@@ -321,7 +331,12 @@ private fun UserPosts(postIds: List<String>, modifier: Modifier) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun EditUserInfo(modifier: Modifier, avatarUrl: String) {
+private fun EditUserInfo(
+    modifier: Modifier,
+    avatarUrl: String,
+    mineScreenViewModel: MineScreenViewModel,
+    username: String
+) {
     val context = LocalContext.current
     val newNicknameState = remember {
         mutableStateOf("")
@@ -380,7 +395,14 @@ private fun EditUserInfo(modifier: Modifier, avatarUrl: String) {
                 .align(alignment = CenterHorizontally)
                 .padding(5.dp),
             onClick = {
-                applyChanges(context)
+                applyChanges(
+                    context,
+                    username,
+                    newNicknameState.value,
+                    newPersonalSignState.value,
+                    avtarUriState.value,
+                    mineScreenViewModel
+                )
             },
             shape = RoundedCornerShape(10.dp),
         ) {

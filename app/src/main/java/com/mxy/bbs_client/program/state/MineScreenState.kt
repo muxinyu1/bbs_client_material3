@@ -1,6 +1,9 @@
 package com.mxy.bbs_client.program.state
 
+import androidx.compose.ui.text.Placeholder
+
 data class MineScreenState(
-    var login: Boolean,
-    var username: String?,
+    val login: Boolean,
+    val username: String?,
+    val placeholder: Int
 )

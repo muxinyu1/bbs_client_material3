@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
+//TODO:添加缩小动画
 @Composable
 fun ExpandableCard(
     modifier: Modifier,
@@ -35,10 +36,10 @@ fun ExpandableCard(
     var stroke by remember { mutableStateOf(1) } // Stroke State
     Card(
         modifier = modifier
-            .animateContentSize( // Animation
+            .animateContentSize(
                 animationSpec = tween(
-                    durationMillis = 400, // Animation Speed
-                    easing = LinearOutSlowInEasing // Animation Type
+                    durationMillis = 400,
+                    easing = LinearOutSlowInEasing
                 )
             ).clickable {
                 expand = !expand

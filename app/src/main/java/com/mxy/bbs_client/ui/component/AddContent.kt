@@ -85,7 +85,6 @@ fun AddContent(isPost: Boolean, modifier: Modifier) {
         contentState.value = it
     }
     Scaffold(
-        modifier = modifier,
         bottomBar = {
             PictureEmojiAndSend(
                 isPost,
@@ -96,7 +95,7 @@ fun AddContent(isPost: Boolean, modifier: Modifier) {
             )
         },
         content = {
-            Column {
+            Column(modifier = modifier) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = if (isPost) ReleasePostText else ReleaseReviewText,

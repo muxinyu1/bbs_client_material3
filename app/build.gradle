@@ -65,6 +65,8 @@ dependencies {
     implementation 'de.charlex.compose:bottom-drawer-scaffold:1.0.0-rc01'
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1'
+    implementation 'com.google.accompanist:accompanist-swiperefresh:0.25.1'
+    implementation 'com.google.accompanist:accompanist-placeholder-material:0.25.1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

@@ -1,65 +1,68 @@
 package com.mxy.bbs_client.ui.component
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.google.gson.Gson
-import com.mxy.bbs_client.program.ProgramState
-import com.mxy.bbs_client.utility.Client
-import com.mxy.bbs_client.utility.Utility
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.RefreshCcw
-import de.charlex.compose.BottomDrawerScaffold
-import kotlinx.coroutines.launch
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.material.fade
+import com.google.accompanist.placeholder.material.placeholder
+import com.google.accompanist.placeholder.placeholder
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 
 private val PostCardPadding = PaddingValues(5.dp)
 
 private const val EmptyPostId = "正在加载帖子"
 
 @Composable
-fun PostCardList() {
-    val postIdsState = remember {
-        mutableStateOf(ProgramState.PostState.homePostList)
-    }
-    PostList(postIdsState.value)
-//    BottomDrawerScaffold(
-//        drawerContent = {
-//            AddContent(isPost = true, modifier = Modifier.padding(5.dp))
-//                        },
-//        floatingActionButton = {
-//            FloatingActionButton(onClick = { /*TODO:刷新帖子列表*/ }, modifier = Modifier.size(70.dp)) {
-//                Icon(FeatherIcons.RefreshCcw, contentDescription = "Refresh")
-//            }
-//        },
-//        drawerPeekHeight = 20.dp
-//    ) {
-//
-//    }
-    with(Utility.IOCoroutineScope) {
-        launch {
-            val postListResponse = Client.getPostList()
-            postIdsState.value = postListResponse.postIds
-        }
-    }
+fun PostCardList(
+    postList: List<String>,
+    modifier: Modifier,
+    homeScreenViewModel: HomeScreenViewModel
+) {
+    PostList(postList, modifier, homeScreenViewModel)
 }
 
 @Composable
-private fun PostList(postIds: List<String>) {
-    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        for (postId in postIds) {
-            if (postId != EmptyPostId) {
-                PostCard(postId = postId, modifier = Modifier.padding(2.dp))
-                Spacer(modifier = Modifier.height(10.dp))
+private fun PostList(
+    postIds: List<String>,
+    modifier: Modifier,
+    homeScreenViewModel: HomeScreenViewModel
+) {
+    val isRefreshing by homeScreenViewModel.isRefreshing.collectAsState()
+    val isLoading by homeScreenViewModel.isLoading.collectAsState()
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isRefreshing = isRefreshing),
+        modifier = modifier,
+        onRefresh = { homeScreenViewModel.refresh() })
+    {
+        LazyColumn {
+            items(postIds.size) { i: Int ->
+                if (postIds[i] != EmptyPostId) {
+                    PostCard(
+                        postId = postIds[i],
+                        modifier = Modifier
+                            .placeholder(isLoading, highlight = PlaceholderHighlight.fade())
+                            .padding(2.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
             }
         }
     }
+//    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+//        for (postId in postIds) {
+//            if (postId != EmptyPostId) {
+//                PostCard(postId = postId, modifier = Modifier.padding(2.dp))
+//                Spacer(modifier = Modifier.height(10.dp))
+//            }
+//        }
+//    }
 }
