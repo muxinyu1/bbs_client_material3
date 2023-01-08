@@ -30,9 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mxy.bbs_client.program.ProgramState
-import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
-import com.mxy.bbs_client.program.viewmodel.PostThumbnailViewModel
-import com.mxy.bbs_client.program.viewmodel.UserInfoViewModel
+import com.mxy.bbs_client.program.viewmodel.*
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
 import compose.icons.FeatherIcons
@@ -165,6 +163,8 @@ fun UserInfoCard(
     modifier: Modifier,
     userInfoViewModel: UserInfoViewModel,
     mineScreenViewModel: MineScreenViewModel,
+    appViewModel: AppViewModel,
+    homeScreenViewModel: HomeScreenViewModel,
     visible: Boolean
 ) {
     val userInfoState by userInfoViewModel.userInfoState.collectAsState()
@@ -194,7 +194,12 @@ fun UserInfoCard(
                     Header(imageVector = FeatherIcons.Send, text = MyPosts)
                 }
             ) {
-                UserPosts(postIds = userInfoState.myPosts, modifier = Modifier.padding(5.dp))
+                UserPosts(
+                    postIds = userInfoState.myPosts,
+                    modifier = Modifier.padding(5.dp),
+                    appViewModel = appViewModel,
+                    homeScreenViewModel = homeScreenViewModel
+                )
             }
             //我的收藏
             ExpandableCard(
@@ -205,7 +210,9 @@ fun UserInfoCard(
             ) {
                 UserPosts(
                     postIds = userInfoState.myCollections,
-                    modifier = Modifier.padding(5.dp)
+                    modifier = Modifier.padding(5.dp),
+                    homeScreenViewModel = homeScreenViewModel,
+                    appViewModel = appViewModel
                 )
             }
             //编辑信息
@@ -317,13 +324,19 @@ private fun UserNickname(
 }
 
 @Composable
-private fun UserPosts(postIds: List<String>, modifier: Modifier) {
+private fun UserPosts(
+    postIds: List<String>,
+    modifier: Modifier,
+    appViewModel: AppViewModel,
+    homeScreenViewModel: HomeScreenViewModel
+) {
     Column(modifier = modifier) {
         for (postId in postIds) {
             PostThumbnail(
                 modifier = Modifier.padding(10.dp),
-                postId = postId,
-                PostThumbnailViewModel(postId)
+                postThumbnailViewModel = PostThumbnailViewModel(postId),
+                homeScreenViewModel = homeScreenViewModel,
+                appViewModel = appViewModel
             )
         }
     }
@@ -419,7 +432,8 @@ private fun EditUserInfo(
 @Composable
 fun PostThumbnail(
     modifier: Modifier,
-    postId: String,
+    appViewModel: AppViewModel,
+    homeScreenViewModel: HomeScreenViewModel,
     postThumbnailViewModel: PostThumbnailViewModel
 ) {
     val postState by postThumbnailViewModel.postState.collectAsState()
@@ -427,7 +441,10 @@ fun PostThumbnail(
     OutlinedCard(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { ProgramState.PostState.openedPost = postId },
+            .clickable {
+                appViewModel.changeScreenTo(0)
+                homeScreenViewModel.openPost(postState.id!!)
+            },
         shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, Color.Black)
     ) {

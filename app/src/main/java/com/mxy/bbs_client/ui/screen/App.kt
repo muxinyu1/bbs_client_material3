@@ -1,6 +1,5 @@
 package com.mxy.bbs_client.ui.screen
 
-import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
@@ -20,11 +19,11 @@ import com.mxy.bbs_client.program.viewmodel.AppViewModel
 import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.ui.component.AddContent
+import com.mxy.bbs_client.ui.component.AppTopBar
 import com.mxy.bbs_client.ui.component.BottomNavigation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Plus
 import kotlinx.coroutines.launch
-import java.security.cert.CertificateEncodingException
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -35,6 +34,7 @@ fun App(
     mineScreenViewModel: MineScreenViewModel = viewModel()
 ) {
     val appState by appViewModel.appState.collectAsState()
+    val homeScreenState by homeScreenViewModel.homeScreenState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
@@ -43,13 +43,28 @@ fun App(
         sheetShape = RoundedCornerShape(20.dp),
         sheetContent = {
             if (appState.currentScreen == 0) {
-                AddContent(
-                    isPost = true,
-                    modifier = Modifier
-                        .padding(10.dp)
-                        .clip(RoundedCornerShape(topEnd = 20.dp, topStart = 20.dp)),
-                    mineScreenViewModel = mineScreenViewModel
-                )
+                if (homeScreenState.openedPost == null) {
+                    AddContent(
+                        isPost = true,
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .clip(RoundedCornerShape(topEnd = 20.dp, topStart = 20.dp)),
+                        mineScreenViewModel = mineScreenViewModel,
+                        homeScreenViewModel = homeScreenViewModel
+                    )
+                } else {
+                    AddContent(
+                        isPost = false,
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .clip(
+                                RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                            ),
+                        mineScreenViewModel = mineScreenViewModel,
+                        targetPost = homeScreenState.openedPost,
+                        homeScreenViewModel = homeScreenViewModel
+                    )
+                }
             } else {
                 Text(text = "空sheet")
             }
@@ -58,11 +73,7 @@ fun App(
     ) {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text(text = "首页")},
-                    navigationIcon = {},
-                    actions = {}
-                )
+                AppTopBar(index = appState.currentScreen, appViewModel, homeScreenViewModel)
             },
             bottomBar = {
                 BottomNavigation(appState, appViewModel)
@@ -70,8 +81,8 @@ fun App(
             floatingActionButton = {
                 AnimatedVisibility(
                     visible = appState.currentScreen == 0,
-                    enter = fadeIn(),
-                    exit = fadeOut()
+                    enter = slideInHorizontally { (3 * it) / 2 },
+                    exit = slideOutHorizontally { (3 * it) / 2 }
                 ) {
                     FloatingActionButton(onClick = {
                         coroutineScope.launch {
@@ -99,7 +110,9 @@ fun App(
             ) {
                 MineScreen(
                     mineScreenViewModel = mineScreenViewModel,
-                    modifier = Modifier.padding(5.dp)
+                    modifier = Modifier.padding(5.dp),
+                    appViewModel = appViewModel,
+                    homeScreenViewModel = homeScreenViewModel
                 )
             }
         }

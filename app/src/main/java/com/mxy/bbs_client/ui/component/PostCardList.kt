@@ -34,7 +34,8 @@ fun PostCardList(
 private fun PostList(
     postIds: List<String>,
     modifier: Modifier,
-    homeScreenViewModel: HomeScreenViewModel
+    homeScreenViewModel: HomeScreenViewModel,
+    lazyLoad: Boolean = false
 ) {
     val isRefreshing by homeScreenViewModel.isRefreshing.collectAsState()
     val isLoading by homeScreenViewModel.isLoading.collectAsState()
@@ -44,26 +45,40 @@ private fun PostList(
         onRefresh = { homeScreenViewModel.refresh() }
     )
     {
-        LazyColumn {
-            items(postIds.size) { i: Int ->
-                if (postIds[i] != EmptyPostId) {
-                    PostCard(
-                        postId = postIds[i],
-                        modifier = Modifier
-                            .placeholder(isLoading, highlight = PlaceholderHighlight.fade())
-                            .padding(2.dp)
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
+        if (lazyLoad) {
+            LazyColumn {
+                items(postIds.size) { i: Int ->
+                    if (postIds[i] != EmptyPostId) {
+                        PostCard(
+                            postId = postIds[i],
+                            modifier = Modifier
+                                .placeholder(isLoading, highlight = PlaceholderHighlight.fade())
+                                .padding(2.dp),
+                            homeScreenViewModel = homeScreenViewModel
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
+            }
+        } else {
+            Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+                for (postId in postIds) {
+                    if (postId != EmptyPostId) {
+                        PostCard(
+                            postId = postId,
+                            modifier = Modifier
+                                .placeholder(
+                                    isLoading,
+                                    highlight = PlaceholderHighlight.fade()
+                                )
+                                .padding(2.dp),
+                            homeScreenViewModel = homeScreenViewModel
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
                 }
             }
         }
     }
-//    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
-//        for (postId in postIds) {
-//            if (postId != EmptyPostId) {
-//                PostCard(postId = postId, modifier = Modifier.padding(2.dp))
-//                Spacer(modifier = Modifier.height(10.dp))
-//            }
-//        }
-//    }
+
 }

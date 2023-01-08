@@ -16,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -63,7 +65,8 @@ const val AlreadyBottom = "到底了~~"
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun Post(
-    postId: String?,
+    postId: String,
+    postHost: String,
     avatarUrl: String,
     nickname: String,
     date: String,
@@ -76,185 +79,81 @@ private fun Post(
     iLike: Boolean,
     replyIds: List<String>
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val iLikeState = remember { mutableStateOf(iLike) }
     val likeNumState = remember { mutableStateOf(likeNum) }
     likeNumState.value = likeNum
-    val scaffoldState = rememberBottomDrawerScaffoldState()
-    BottomDrawerScaffold(
-        drawerPeekHeight = 20.dp,
-        scaffoldState = scaffoldState,
-        drawerContent = { },
-        drawerShape = RoundedCornerShape(20.dp),
-    ) {
-        Column(modifier = modifier.verticalScroll(rememberScrollState())) {
-            UserAndDate(avatarUrl = avatarUrl, username = nickname, date = date)
-            Spacer(modifier = Modifier.height(5.dp))
-            //帖子标题
-            Text(
-                text = title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(5.dp)
+    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+        UserAndDate(avatarUrl = avatarUrl, username = nickname, date = date)
+        Spacer(modifier = Modifier.height(5.dp))
+        //帖子标题
+        Text(
+            text = title,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(5.dp)
+        )
+        //帖子内容
+        Text(
+            text = content, fontSize = 16.sp, modifier = Modifier.padding(5.dp)
+        )
+        //帖子图片
+        for (imgUrl in postImgUrls) {
+            AsyncImage(
+                model = imgUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .border(2.dp, Color.Gray, RoundedCornerShape(10.dp))
+                    .fillMaxWidth(),
             )
-            //帖子内容
-            Text(
-                text = content, fontSize = 16.sp, modifier = Modifier.padding(5.dp)
-            )
-            //帖子图片
-            for (imgUrl in postImgUrls) {
-                Log.d("mxy!!!", "准备加载$imgUrl")
-                AsyncImage(
-                    model = imgUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .border(2.dp, Color.Gray, RoundedCornerShape(10.dp))
-                        .fillMaxWidth(),
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-            //点赞图标
-            Column(modifier = Modifier.padding(5.dp)) {
-                IconButton(onClick = {
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+        //点赞图标
+        Column(modifier = Modifier.padding(5.dp)) {
+            IconButton(
+                onClick = {
                     if (!iLikeState.value) {
                         iLikeState.value = true
                         likeNumState.value++
                         onLikeClick(postId)
                     }
-                }) {
-                    Icon(
-                        painter = if (iLikeState.value) painterResource(id = R.drawable.like) else painterResource(
-                            id = R.drawable.liked
-                        ), contentDescription = "like"
-                    )
-                }
-                //点赞数
-                Text(text = likeNumState.value.toString(), color = Color.Black.copy(alpha = 0.7f))
+                },
+                modifier = Modifier.align(alignment = CenterHorizontally)
+            ) {
+                Icon(
+                    painter = if (iLikeState.value) painterResource(id = R.drawable.liked) else painterResource(
+                        id = R.drawable.like
+                    ), contentDescription = "like"
+                )
             }
-            Divider()
-            Spacer(modifier = Modifier.height(20.dp))
-            var floor = 0
-            for (replyId in replyIds) {
-                Reply(replyId = replyId, Modifier.padding(5.dp), floor++)
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
+            //点赞数
+            Text(
+                text = likeNumState.value.toString(),
+                modifier = Modifier.align(alignment = CenterHorizontally)
+            )
         }
+        Divider()
+        Spacer(modifier = Modifier.height(20.dp))
+        var floor = 0
+        for (replyId in replyIds) {
+            Reply(replyId = replyId, Modifier.padding(5.dp), floor++, postHost = postHost)
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+
     }
-
-//    Scaffold(
-//        floatingActionButton = {
-//            FloatingActionButton(
-//                onClick = {
-//                    coroutineScope.launch {
-//                        if (drawerState.isClosed)
-//                            drawerState.open()
-//                        else
-//                            drawerState.close();
-//                        Log.d("bottom drawer", "open")
-//                    }
-//                },
-//                containerColor = Color.White,
-//                modifier = Modifier.size(80.dp)
-//            ) {
-//                Icon(Icons.Filled.Edit, contentDescription = "Reply")
-//            }
-//        },
-//    ) {
-//        Column {
-//            BottomDrawer(
-//                drawerContent = { AddContentPreview() },
-//                drawerState = drawerState,
-//                drawerShape = RoundedCornerShape(20.dp),
-//                gesturesEnabled = true,
-//            ) {
-//                Column(
-//                    modifier = Modifier.fillMaxSize(),
-//                    verticalArrangement = Arrangement.Center,
-//                    horizontalAlignment = Alignment.CenterHorizontally,
-//                    content = {}
-//                )
-//            }
-//            Column(modifier = modifier.verticalScroll(scrollState)) {
-//                UserAndDate(avatarUrl = avatarUrl, username = nickname, date = date)
-//                Spacer(modifier = Modifier.height(5.dp))
-//                //帖子标题
-//                Text(
-//                    text = title,
-//                    fontSize = 20.sp,
-//                    fontWeight = FontWeight.Bold,
-//                    modifier = Modifier.padding(5.dp)
-//                )
-//                //帖子内容
-//                Text(
-//                    text = content, fontSize = 16.sp, modifier = Modifier.padding(5.dp)
-//                )
-//                //帖子图片
-//                for (imgUrl in postImgUrls) {
-//                    Log.d("mxy!!!", "准备加载$imgUrl")
-//                    AsyncImage(
-//                        model = imgUrl,
-//                        contentDescription = null,
-//                        contentScale = ContentScale.Crop,
-//                        modifier = Modifier
-//                            .clip(RoundedCornerShape(10.dp))
-//                            .border(2.dp, Color.Gray, RoundedCornerShape(10.dp))
-//                            .fillMaxWidth(),
-//                    )
-//                    Spacer(modifier = Modifier.height(20.dp))
-//                }
-//                //点赞图标
-//                Column(modifier = Modifier.padding(5.dp)) {
-//                    IconButton(onClick = {
-//                        if (!iLikeState.value) {
-//                            iLikeState.value = true
-//                            likeNumState.value++
-//                            onLikeClick(postId)
-//                        }
-//                    }) {
-//                        Icon(
-//                            painter = if (iLikeState.value) painterResource(id = R.drawable.ic_i_like) else painterResource(
-//                                id = R.drawable.iconmonstr_thumb_10
-//                            ), contentDescription = "like"
-//                        )
-//                    }
-//                    //点赞数
-//                    Text(text = likeNumState.value.toString(), color = Color.Black.copy(alpha = 0.7f))
-//                }
-//                Divider()
-//                Spacer(modifier = Modifier.height(20.dp))
-//                var floor = 0
-//                for (replyId in replyIds) {
-//                    Reply(replyId = replyId, Modifier.padding(5.dp), floor++)
-//                    Spacer(modifier = Modifier.height(20.dp))
-//                }
-//
-//            }
-//        }
-//
-//    }
-}
-
-/**
- * 还在加载中的Post(默认Post)
- */
-@Composable
-fun Post() {
-    //TODO:修改默认Post样式
-    Text(text = "默认Post")
 }
 
 @Composable
-fun Post(postId: String, modifier: Modifier) {
+fun Post(postId: String?, modifier: Modifier) {
+    if (postId == null)
+        return
     val postState = remember {
         mutableStateOf(DefaultPost)
     }
     val userInfoState = remember {
         mutableStateOf(DefaultUserInfo)
     }
-
     Post(
         postId = postId,
         avatarUrl = userInfoState.value.avatarUrl!!,
@@ -267,7 +166,8 @@ fun Post(postId: String, modifier: Modifier) {
         postImgUrls = postState.value.images,
         likeNum = postState.value.likeNum!!,
         iLike = false,
-        replyIds = postState.value.reviews
+        replyIds = postState.value.reviews,
+        postHost = userInfoState.value.username!!
     )
     with(Utility.IOCoroutineScope) {
         launch {

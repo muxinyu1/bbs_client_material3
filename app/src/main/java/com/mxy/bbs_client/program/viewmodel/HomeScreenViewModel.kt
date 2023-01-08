@@ -28,6 +28,23 @@ class HomeScreenViewModel : ViewModel() {
         }
     }
 
+    fun refreshPost() = with(Utility.IOCoroutineScope) {
+        launch {
+            _homeScreenState.value = HomeScreenState(
+                _homeScreenState.value.postList,
+                _homeScreenState.value.openedPost,
+                1 - _homeScreenState.value.placeHolder
+            )
+        }
+    }
+
+    fun openPost(postId: String) {
+        _homeScreenState.value = HomeScreenState(homeScreenState.value.postList, postId)
+    }
+
+    fun closePost() {
+        _homeScreenState.value = HomeScreenState(homeScreenState.value.postList, null)
+    }
 
     init {
         with(Utility.IOCoroutineScope) {

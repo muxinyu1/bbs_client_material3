@@ -2,8 +2,10 @@ package com.mxy.bbs_client.program.viewmodel
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import com.google.gson.Gson
 import com.mxy.bbs_client.program.state.MineScreenState
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
@@ -18,6 +20,7 @@ class MineScreenViewModel : ViewModel() {
         private const val NotLoginError = "请先登录"
         private const val PleaseTryAgain = "请再试一次"
         private const val PostSuccess = "发帖成功"
+        private const val ReviewSuccess = "评论成功"
         private fun toFile(uri: Uri, context: Context): File {
             val file = File.createTempFile(Utility.getRandomString(), null)
             val inputStream = context.contentResolver.openInputStream(uri)
@@ -83,6 +86,52 @@ class MineScreenViewModel : ViewModel() {
                         }
                     }
                     refresh(_mineScreenState.value.username!!)
+                }
+            }
+        }
+    }
+
+    fun sendReview(
+        content: String,
+        images: List<Uri>,
+        context: Context,
+        targetPost: String,
+        homeScreenViewModel: HomeScreenViewModel
+    ) {
+        if (!_mineScreenState.value.login) {
+            with(Utility.UICoroutineScope) {
+                launch {
+                    Toast.makeText(context, NotLoginError, Toast.LENGTH_SHORT).show()
+                }
+            }
+            return
+        }
+        with(Utility.IOCoroutineScope) {
+            launch {
+                val imageList = toFiles(images, context)
+                val reviewResponse = Client.addReview(
+                    Utility.getRandomString(),
+                    targetPost,
+                    //已经登录后username不可能是null
+                    _mineScreenState.value.username!!,
+                    content,
+                    imageList
+                )
+                Log.d("sendReview", Gson().toJson(reviewResponse))
+                if (!reviewResponse.success!!) {
+                    //postId有极小的概率会重复
+                    with(Utility.UICoroutineScope) {
+                        launch {
+                            Toast.makeText(context, PleaseTryAgain, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    with(Utility.UICoroutineScope) {
+                        launch {
+                            Toast.makeText(context, ReviewSuccess, Toast.LENGTH_SHORT).show()
+                        }
+                        homeScreenViewModel.refreshPost()
+                    }
                 }
             }
         }

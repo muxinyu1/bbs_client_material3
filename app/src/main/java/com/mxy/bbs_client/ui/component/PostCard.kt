@@ -1,7 +1,7 @@
 package com.mxy.bbs_client.ui.component
 
-import android.util.Log
-import androidx.compose.foundation.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,16 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.mxy.bbs_client.R
-import com.mxy.bbs_client.program.ProgramState
+import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
 import compose.icons.FeatherIcons
@@ -32,15 +29,8 @@ import compose.icons.feathericons.MessageCircle
 import compose.icons.feathericons.ThumbsUp
 import kotlinx.coroutines.launch
 
-val cardShadowSz = 5.dp;
-val cardBackgroundColor = Color.White
 val cardCornerShape = RoundedCornerShape(3)
 val avatarSize = 40.dp
-
-private val onPostCardClick: (String) -> Unit = {
-    ProgramState.PostState.openedPost = it
-    Log.d("PostCard", "openedPost = $it")
-}
 
 @Composable
 fun PostCard(
@@ -54,11 +44,11 @@ fun PostCard(
     title: String,
     content: String,
     contentImgUrl: String?,
-    onPostCardClick: (String) -> Unit
+    homeScreenViewModel: HomeScreenViewModel
 ) {
     OutlinedCard(
         shape = cardCornerShape,
-        modifier = modifier.clickable { onPostCardClick(postId) },
+        modifier = modifier.clickable { homeScreenViewModel.openPost(postId) },
         //border = cardBorderStroke,
     ) {
         Column(modifier = Modifier.padding(5.dp)) {
@@ -73,7 +63,11 @@ fun PostCard(
 }
 
 @Composable
-fun PostCard(postId: String, modifier: Modifier) {
+fun PostCard(
+    postId: String,
+    modifier: Modifier,
+    homeScreenViewModel: HomeScreenViewModel
+) {
     val defaultUserInfoState = remember {
         mutableStateOf(DefaultUserInfo)
     }
@@ -91,7 +85,7 @@ fun PostCard(postId: String, modifier: Modifier) {
         title = defaultPostState.value.title!!,
         content = defaultPostState.value.content!!,
         contentImgUrl = if (defaultPostState.value.images.isEmpty()) null else defaultPostState.value.images[0],
-        onPostCardClick = onPostCardClick
+        homeScreenViewModel = homeScreenViewModel
     )
     with(Utility.IOCoroutineScope) {
         launch {
@@ -186,10 +180,4 @@ private fun CardContent(title: String, content: String, contentImgUrl: String?) 
         }
     }
 
-}
-
-@Composable
-@Preview
-fun PostCardPreview() {
-    PostCard(postId = "尴尬的铁根er的帖子给对方", modifier = Modifier.padding(5.dp))
 }

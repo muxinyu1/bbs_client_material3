@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Image
@@ -39,7 +40,7 @@ private const val EnterReviewContent = "评论内容"
 private const val ReleasePostText = "发布帖子"
 private const val ReleaseReviewText = "发表回复"
 private const val TitleEmptyError = "标题不能为空"
-private const val ContentEmptyError = "标题不能为空"
+private const val ContentEmptyError = "内容不能为空"
 private const val SelectImages = "image/*"
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,7 +49,9 @@ private const val SelectImages = "image/*"
 fun AddContent(
     isPost: Boolean,
     modifier: Modifier,
-    mineScreenViewModel: MineScreenViewModel
+    mineScreenViewModel: MineScreenViewModel,
+    homeScreenViewModel: HomeScreenViewModel,
+    targetPost: String? = null
 ) {
     var title by remember {
         mutableStateOf("")
@@ -79,14 +82,25 @@ fun AddContent(
                     imagesPickerLauncher.launch(SelectImages)
                 },
                 onSendClick = {
-                    mineScreenViewModel.sendPost(
-                        title = title,
-                        content = content,
-                        images = imageList,
-                        context = context
-                    )
+                    if (isPost) {
+                        mineScreenViewModel.sendPost(
+                            title = title,
+                            content = content,
+                            images = imageList,
+                            context = context
+                        )
+                    } else {
+                        mineScreenViewModel.sendReview(
+                            content = content,
+                            images = imageList,
+                            context = context,
+                            //如果打开的是发表评论,那么targetPost不可能是null
+                            targetPost = targetPost!!,
+                            homeScreenViewModel = homeScreenViewModel
+                        )
+                    }
                 },
-                titleOrContentIsEmpty = titleIsEmpty || contentIsEmpty
+                titleOrContentIsEmpty = if (isPost) (titleIsEmpty || contentIsEmpty) else contentIsEmpty
             )
         },
         content = {
@@ -184,8 +198,8 @@ private fun ImagesSet(
                 contentDescription = "post or review img",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
                     .size(95.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .padding(10.dp)
             )
         }
@@ -268,5 +282,5 @@ private fun PictureEmojiAndSend(
 @Preview(showBackground = true)
 @Composable
 fun AddContentPreview() {
-    AddContent(isPost = true, modifier = Modifier.padding(5.dp), viewModel())
+    AddContent(isPost = true, modifier = Modifier.padding(5.dp), viewModel(), viewModel())
 }
