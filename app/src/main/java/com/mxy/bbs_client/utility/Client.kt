@@ -136,6 +136,9 @@ object Client {
             .addFormDataPart("targetPost", targetPost)
             .addFormDataPart("username", username)
             .addFormDataPart("content", content)
+        if (images.isEmpty()) {
+            multipartBodyBuilder.addFormDataPart("images", "", "".toRequestBody(null))
+        }
         for (image in images) {
             val currentImageRequestBody = image.asRequestBody(MultipartBody.FORM)
             multipartBodyBuilder.addFormDataPart("images", image.name, currentImageRequestBody)
