@@ -5,8 +5,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-private const val MinLength = 128
-private const val MaxLength = 1024;
+private const val MinLength = 16
+private const val MaxLength = 64
 
 object Utility {
     val IOCoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -17,12 +17,5 @@ object Utility {
         return (1..length)
             .map { allowedChars.random() }
             .joinToString("")
-    }
-    fun RefreshPostList() {
-        with(IOCoroutineScope) {
-            launch {
-                ProgramState.PostState.homePostList = Client.getPostList().postIds
-            }
-        }
     }
 }

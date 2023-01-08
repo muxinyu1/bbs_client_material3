@@ -3,113 +3,121 @@
 package com.mxy.bbs_client.ui.component
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.border
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mxy.bbs_client.R
-import com.mxy.bbs_client.program.ProgramState
-import com.mxy.bbs_client.utility.Client
-import com.mxy.bbs_client.utility.Utility
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Image
+import compose.icons.feathericons.Minus
+import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Smile
-import kotlinx.coroutines.launch
-import java.io.File
 
 private const val EnterTitle = "帖子标题"
 private const val EnterPostContent = "帖子内容"
 private const val EnterReviewContent = "评论内容"
 private const val ReleasePostText = "发布帖子"
 private const val ReleaseReviewText = "发表回复"
-
-private val onSendClick: (Boolean,  String, String, List<File>) -> Unit =
-    { isPost, titleValue, contentValue, images ->
-        if (titleValue == "" || contentValue == "") {
-            //TODO:内容和标题不能是空
-
-        } else {
-            with(Utility.IOCoroutineScope) {
-                launch {
-                    if (isPost) {
-                        val postResponse = Client.addPost(Utility.getRandomString(), ProgramState.UserInfoState.username, titleValue, contentValue, images)
-                        if (postResponse.success == null || !postResponse.success) {
-                            //TODO:发帖失败
-                        } else {
-
-                        }
-                    } else {
-                        val reviewResponse = Client.addReview(Utility.getRandomString(), ProgramState.PostState.openedPost, ProgramState.UserInfoState.username, contentValue, images)
-                        if (reviewResponse.success == null || !reviewResponse.success) {
-                            //TODO:回复帖子失败
-                        } else {
-
-                        }
-                    }
-                }
-            }
-        }
-    }
+private const val TitleEmptyError = "标题不能为空"
+private const val ContentEmptyError = "标题不能为空"
+private const val SelectImages = "image/*"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun AddContent(isPost: Boolean, modifier: Modifier) {
-    val titleContentState = remember {
+fun AddContent(
+    isPost: Boolean,
+    modifier: Modifier,
+    mineScreenViewModel: MineScreenViewModel
+) {
+    var title by remember {
         mutableStateOf("")
     }
-    val contentState = remember {
+    var content by remember {
         mutableStateOf("")
     }
-    val imagesState = remember {
-        mutableStateOf(listOf<File>())
+    var titleIsEmpty by remember {
+        mutableStateOf(true)
     }
-    val onTitleContentChange: (String) -> Unit = {
-        titleContentState.value = it
+    var contentIsEmpty by remember {
+        mutableStateOf(true)
     }
-    val onContentChange: (String) -> Unit = {
-        contentState.value = it
+    var imageList by remember {
+        mutableStateOf(listOf<Uri>())
     }
+    val context = LocalContext.current
+    val imagesPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetMultipleContents(),
+        ) {
+            imageList = imageList + it
+        }
     Scaffold(
         bottomBar = {
             PictureEmojiAndSend(
-                isPost,
-                titleContentState.value,
-                contentState.value,
-                imagesState.value,
-                onSendClick
+                onSelectImgClick = {
+                    imagesPickerLauncher.launch(SelectImages)
+                },
+                onSendClick = {
+                    mineScreenViewModel.sendPost(
+                        title = title,
+                        content = content,
+                        images = imageList,
+                        context = context
+                    )
+                },
+                titleOrContentIsEmpty = titleIsEmpty || contentIsEmpty
             )
         },
         content = {
             Column(modifier = modifier) {
+                Divider(
+                    modifier = Modifier
+                        .height(4.dp)
+                        .width(60.dp)
+                        .align(alignment = CenterHorizontally)
+                        .clip(
+                            RoundedCornerShape(2.dp)
+                        )
+                )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = if (isPost) ReleasePostText else ReleaseReviewText,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(alignment = Alignment.CenterHorizontally)
+                    modifier = Modifier.align(alignment = CenterHorizontally)
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 //如果是发新帖的话, 有个添加标题选项
                 if (isPost) {
                     EnterTitle(
                         modifier = Modifier.padding(5.dp),
-                        titleValue = titleContentState.value,
-                        onValueChange = onTitleContentChange
+                        titleValue = title,
+                        onValueChange = {
+                            titleIsEmpty = it.isEmpty()
+                            title = it
+                        },
+                        titleIsEmpty = titleIsEmpty
                     )
                     Divider()
                 }
@@ -117,8 +125,33 @@ fun AddContent(isPost: Boolean, modifier: Modifier) {
                 EnterText(
                     placeholder = if (isPost) EnterPostContent else EnterReviewContent,
                     modifier = Modifier.padding(5.dp),
-                    value = contentState.value,
-                    onValueChange = onContentChange
+                    value = content,
+                    onValueChange = {
+                        contentIsEmpty = it.isEmpty()
+                        content = it
+                    },
+                    isError = contentIsEmpty,
+                    supportingText = {
+                        if (contentIsEmpty) Text(text = ContentEmptyError)
+                    },
+                    singleLine = false
+                )
+                //帖子或回复中包含的图片
+                ImagesSet(
+                    modifier = Modifier.padding(5.dp),
+                    imageList = imageList,
+                    onAddImgClick = {
+                        imagesPickerLauncher.launch(SelectImages)
+                    },
+                    onRemoveImgClick = {
+                        if (imageList.isNotEmpty()) {
+                            imageList = if (imageList.size == 1) {
+                                listOf()
+                            } else {
+                                imageList.subList(1, imageList.size)
+                            }
+                        }
+                    }
                 )
             }
         }
@@ -126,25 +159,77 @@ fun AddContent(isPost: Boolean, modifier: Modifier) {
 }
 
 @Composable
-private fun EnterTitle(modifier: Modifier, titleValue: String, onValueChange: (String) -> Unit) =
+private fun ImagesSet(
+    modifier: Modifier,
+    imageList: List<Uri>,
+    onAddImgClick: () -> Unit,
+    onRemoveImgClick: () -> Unit
+) {
+    LazyRow(modifier = modifier, contentPadding = PaddingValues(5.dp)) {
+        item {
+            OutlinedIconButton(
+                shape = RoundedCornerShape(15.dp),
+                onClick = { onRemoveImgClick() },
+                modifier = Modifier
+                    .size(95.dp)
+                    .padding(10.dp)
+            ) {
+                Icon(FeatherIcons.Minus, contentDescription = "Remove image")
+            }
+        }
+        items(imageList) {
+            //TODO:选择的图片应该改成圆角的
+            AsyncImage(
+                model = it,
+                contentDescription = "post or review img",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .size(95.dp)
+                    .padding(10.dp)
+            )
+        }
+        item {
+            OutlinedIconButton(
+                shape = RoundedCornerShape(15.dp),
+                onClick = { onAddImgClick() },
+                modifier = Modifier
+                    .size(95.dp)
+                    .padding(10.dp)
+            ) {
+                Icon(FeatherIcons.Plus, contentDescription = "Add image")
+            }
+        }
+    }
+}
+
+@Composable
+private fun EnterTitle(
+    modifier: Modifier,
+    titleValue: String,
+    onValueChange: (String) -> Unit,
+    titleIsEmpty: Boolean,
+) =
     EnterText(
         placeholder = EnterTitle,
         modifier = modifier,
         value = titleValue,
-        onValueChange = onValueChange
+        onValueChange = onValueChange,
+        isError = titleIsEmpty,
+        supportingText = {
+            if (titleIsEmpty) Text(text = TitleEmptyError)
+        },
+        textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp)
     )
 
 
 @Composable
 private fun PictureEmojiAndSend(
-    isPost: Boolean,
-    titleValue: String,
-    contentValue: String,
-    images: List<File>,
-    onSendClick: (Boolean, String, String, List<File>) -> Unit
+    onSelectImgClick: () -> Unit,
+    onSendClick: () -> Unit,
+    titleOrContentIsEmpty: Boolean,
 ) {
     BottomAppBar(
-        containerColor = Color.Transparent,
         actions = {
             IconButton(onClick = { /* doSomething() */ }) {
                 Icon(
@@ -152,7 +237,9 @@ private fun PictureEmojiAndSend(
                     contentDescription = "Picture Action"
                 )
             }
-            IconButton(onClick = { /* doSomething() */ }) {
+            IconButton(
+                onClick = { onSelectImgClick() }
+            ) {
                 Icon(
                     FeatherIcons.Image,
                     contentDescription = "Emoji Action",
@@ -160,23 +247,26 @@ private fun PictureEmojiAndSend(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                modifier = Modifier.border(1.dp, Color.Black, FloatingActionButtonDefaults.shape),
-                containerColor = Color.Transparent,
-                onClick = { onSendClick(isPost, titleValue, contentValue, images) },
-                elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
-            ) {
-                Icon(Icons.Filled.Send, "Send Content")
+            if (!titleOrContentIsEmpty) {
+                FloatingActionButton(
+                    onClick = { onSendClick() },
+                    elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
+                ) {
+                    Icon(Icons.Filled.Send, "Send Content")
+                }
+            } else {
+                IconButton(onClick = {}, enabled = false) {
+                    Icon(Icons.Filled.Send, "Send Content")
+                }
             }
         },
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, Color.Black, RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
     )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun AddContentPreview() {
-    AddContent(isPost = true, modifier = Modifier.padding(5.dp))
+    AddContent(isPost = true, modifier = Modifier.padding(5.dp), viewModel())
 }

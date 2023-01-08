@@ -41,7 +41,8 @@ private fun PostList(
     SwipeRefresh(
         state = rememberSwipeRefreshState(isRefreshing = isRefreshing),
         modifier = modifier,
-        onRefresh = { homeScreenViewModel.refresh() })
+        onRefresh = { homeScreenViewModel.refresh() }
+    )
     {
         LazyColumn {
             items(postIds.size) { i: Int ->

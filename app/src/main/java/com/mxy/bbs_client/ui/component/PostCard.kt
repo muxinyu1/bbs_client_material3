@@ -47,7 +47,7 @@ fun PostCard(
     postId: String,
     modifier: Modifier,
     avatarUrl: String,
-    username: String,
+    nickname: String,
     date: String,
     reviewNum: Int,
     likeNum: Int,
@@ -63,7 +63,7 @@ fun PostCard(
     ) {
         Column(modifier = Modifier.padding(5.dp)) {
             Spacer(modifier = Modifier.height(5.dp))
-            UserAndDate(avatarUrl = avatarUrl, username = username, date = date)
+            UserAndDate(avatarUrl = avatarUrl, username = nickname, date = date)
             Spacer(modifier = Modifier.height(5.dp))
             CardContent(title = title, content = content, contentImgUrl = contentImgUrl)
             Spacer(modifier = Modifier.height(5.dp))
@@ -84,7 +84,7 @@ fun PostCard(postId: String, modifier: Modifier) {
         postId = postId,
         modifier = modifier,
         avatarUrl = defaultUserInfoState.value.avatarUrl!!,
-        username = defaultUserInfoState.value.username!!,
+        nickname = defaultUserInfoState.value.nickname!!,
         date = defaultPostState.value.date!!,
         reviewNum = defaultPostState.value.reviews.size,
         likeNum = defaultPostState.value.likeNum!!,

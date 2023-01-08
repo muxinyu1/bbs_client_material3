@@ -3,8 +3,6 @@ package com.mxy.bbs_client.ui.component
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.*
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,7 +20,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mxy.bbs_client.entity.user.User
-import com.mxy.bbs_client.program.state.MineScreenState
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.UserInfoViewModel
 import com.mxy.bbs_client.utility.Client

@@ -21,14 +21,12 @@ import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.ui.component.AddContent
 import com.mxy.bbs_client.ui.component.BottomNavigation
-import com.mxy.bbs_client.utility.Utility
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Plus
-import compose.icons.feathericons.RefreshCcw
 import kotlinx.coroutines.launch
+import java.security.cert.CertificateEncodingException
 
 @RequiresApi(Build.VERSION_CODES.O)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun App(
@@ -42,19 +40,30 @@ fun App(
         initialValue = ModalBottomSheetValue.Hidden,
         confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded })
     ModalBottomSheetLayout(
+        sheetShape = RoundedCornerShape(20.dp),
         sheetContent = {
             if (appState.currentScreen == 0) {
                 AddContent(
                     isPost = true,
                     modifier = Modifier
                         .padding(10.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(topEnd = 20.dp, topStart = 20.dp)),
+                    mineScreenViewModel = mineScreenViewModel
                 )
+            } else {
+                Text(text = "空sheet")
             }
         },
         sheetState = sheetState
     ) {
         Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text(text = "首页")},
+                    navigationIcon = {},
+                    actions = {}
+                )
+            },
             bottomBar = {
                 BottomNavigation(appState, appViewModel)
             },
@@ -73,18 +82,20 @@ fun App(
                     }
                 }
             }
-        ) {
+        ) { paddingValues ->
             AnimatedVisibility(
                 visible = appState.currentScreen == 0,
                 enter = slideInHorizontally { -it },
-                exit = slideOutHorizontally { -it }
+                exit = slideOutHorizontally { -it },
+                modifier = Modifier.padding(paddingValues)
             ) {
                 HomeScreen(homeScreenViewModel)
             }
             AnimatedVisibility(
                 visible = appState.currentScreen == 1,
                 enter = slideInHorizontally { it },
-                exit = slideOutHorizontally { it }
+                exit = slideOutHorizontally { it },
+                modifier = Modifier.padding(paddingValues)
             ) {
                 MineScreen(
                     mineScreenViewModel = mineScreenViewModel,

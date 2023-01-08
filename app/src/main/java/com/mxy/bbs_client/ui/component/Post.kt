@@ -84,7 +84,7 @@ private fun Post(
     BottomDrawerScaffold(
         drawerPeekHeight = 20.dp,
         scaffoldState = scaffoldState,
-        drawerContent = { AddContent(isPost = false, modifier = Modifier.padding(5.dp)) },
+        drawerContent = { },
         drawerShape = RoundedCornerShape(20.dp),
     ) {
         Column(modifier = modifier.verticalScroll(rememberScrollState())) {
