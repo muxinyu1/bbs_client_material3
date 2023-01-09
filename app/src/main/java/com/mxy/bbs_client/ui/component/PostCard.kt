@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -97,26 +99,33 @@ fun PostCard(
 
 @Composable
 fun UserAndDate(avatarUrl: String, username: String, date: String) {
-    Row(modifier = Modifier.padding(5.dp)) {
-        AsyncImage(
-            model = avatarUrl,
-            contentDescription = "avatar",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .padding(5.dp)
-                .size(avatarSize)
-                .clip(CircleShape)
-                .border(1.dp, Color.Black.copy(alpha = 0.5f), CircleShape)
-        )
-        Text(
-            text = username,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(5.dp)
-        )
+    Row(modifier = Modifier.padding(5.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row {
+            AsyncImage(
+                model = avatarUrl,
+                contentDescription = "avatar",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .padding(5.dp)
+                    .size(avatarSize)
+                    .clip(CircleShape)
+                    .border(1.dp, Color.Black.copy(alpha = 0.5f), CircleShape)
+                    .align(alignment = CenterVertically)
+            )
+            Text(
+                text = username,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(5.dp)
+                    .align(alignment = CenterVertically)
+            )
+        }
         Text(
             text = date,
             fontStyle = FontStyle.Italic,
-            modifier = Modifier.padding(5.dp)
+            modifier = Modifier
+                .padding(5.dp)
+                .align(alignment = CenterVertically)
         )
     }
 }
