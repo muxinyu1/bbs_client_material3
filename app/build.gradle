@@ -1,6 +1,6 @@
 plugins {
     id 'com.android.application'
-    id 'kotlin-android'
+    id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
 }
 
@@ -48,6 +48,12 @@ android {
 }
 
 dependencies {
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach{
+        kotlinOptions{
+            freeCompilerArgs +=["-Xjvm-default=all",]
+        }
+    }
 
 
     implementation 'androidx.core:core-ktx:1.9.0'
