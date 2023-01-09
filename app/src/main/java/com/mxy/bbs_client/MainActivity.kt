@@ -32,14 +32,23 @@ class MainActivity : ComponentActivity() {
         ViewModelFactory(app = application)
     }
 
+    private val mineScreenViewModel by lazy {
+        viewModelFactory.create(MineScreenViewModel::class.java)
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Bbs_clientTheme {
-                App(mineScreenViewModel = viewModelFactory.create(MineScreenViewModel::class.java))
+                App(mineScreenViewModel = mineScreenViewModel)
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mineScreenViewModel.closeDataBase()
     }
 }

@@ -186,4 +186,8 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
+    fun closeDataBase() {
+        mineScreenStateRepository.closeDataBase()
+    }
 }

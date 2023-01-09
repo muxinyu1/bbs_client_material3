@@ -19,4 +19,10 @@ class MineScreenStateRepository(private val _mineScreenStateDataBase: MineScreen
     suspend fun getMineScreenState(id: Int = 0): MineScreenState? {
         return _mineScreenStateDataBase.mineScreenStateDao().getMineScreenState(id)
     }
+
+    fun closeDataBase() {
+        if (_mineScreenStateDataBase.isOpen) {
+            _mineScreenStateDataBase.close()
+        }
+    }
 }
