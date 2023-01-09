@@ -129,6 +129,8 @@ class HomeScreenViewModel : ViewModel() {
         _homeScreenState.value = HomeScreenState(homeScreenState.value.postList, null)
     }
 
+
+
     init {
         with(Utility.IOCoroutineScope) {
             launch {

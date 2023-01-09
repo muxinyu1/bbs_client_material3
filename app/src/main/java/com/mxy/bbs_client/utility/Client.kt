@@ -1,7 +1,9 @@
 package com.mxy.bbs_client.utility
 
 import android.app.Application
+import android.util.Log
 import androidx.room.Room
+import coil.ImageLoader
 import com.google.gson.Gson
 import com.mxy.bbs_client.entity.action.ActionRequest
 import com.mxy.bbs_client.entity.action.ActionResponse
@@ -18,6 +20,7 @@ import com.mxy.bbs_client.program.db.CacheDatabase
 import com.mxy.bbs_client.program.repository.CacheRepository
 import com.mxy.bbs_client.serverinfo.jsonMediaType
 import com.mxy.bbs_client.serverinfo.serverUrl
+import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -35,14 +38,20 @@ object Client {
             .build()
     }
 
-    private lateinit var _cacheDatabase: CacheDatabase
+    lateinit var imageLoader: ImageLoader
+
+    fun injectImageLoader(loader: ImageLoader) {
+        imageLoader = loader
+    }
+
+    private lateinit var cacheDatabase: CacheDatabase
 
     private lateinit var cacheRepository: CacheRepository
 
     fun createCacheDatabase(app: Application) {
-        _cacheDatabase = Room.databaseBuilder(app, CacheDatabase::class.java, "app_data.db")
+        cacheDatabase = Room.databaseBuilder(app, CacheDatabase::class.java, "app_data.db")
             .fallbackToDestructiveMigration().build()
-        cacheRepository = CacheRepository(_cacheDatabase)
+        cacheRepository = CacheRepository(cacheDatabase)
     }
 
     fun closeDatabase() {
@@ -59,6 +68,7 @@ object Client {
         }
         val localUser = cacheRepository.getUser(username)
         if (localUser != null) {
+            Log.d("缓存", "本地存在${gson.toJson(localUser)}")
             return UserResponse(true, null, localUser)
         }
         val requestBody =
@@ -85,6 +95,7 @@ object Client {
         }
         val localPost = cacheRepository.getPost(postId)
         if (localPost != null) {
+            Log.d("缓存", "本地存在${gson.toJson(localPost)}")
             return PostResponse(true, null, localPost)
         }
         val requestBody = "".toRequestBody(null)

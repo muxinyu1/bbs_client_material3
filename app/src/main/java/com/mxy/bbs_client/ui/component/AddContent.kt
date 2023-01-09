@@ -4,6 +4,7 @@ package com.mxy.bbs_client.ui.component
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -26,6 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import com.google.gson.Gson
 import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import compose.icons.FeatherIcons
@@ -73,6 +78,9 @@ fun AddContent(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetMultipleContents(),
         ) {
+            for (uri in it) {
+                Log.d("获得uri", Gson().toJson(uri.path))
+            }
             imageList = imageList + it
         }
     Scaffold(
@@ -193,7 +201,7 @@ private fun ImagesSet(
         }
         items(imageList) {
             //TODO:选择的图片应该改成圆角的
-            AsyncImage(
+            SubcomposeAsyncImage(
                 model = it,
                 contentDescription = "post or review img",
                 contentScale = ContentScale.Crop,
@@ -201,7 +209,14 @@ private fun ImagesSet(
                     .size(95.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .padding(10.dp)
-            )
+            ) {
+                val state = painter.state
+                if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                    CircularProgressIndicator()
+                } else {
+                    SubcomposeAsyncImageContent()
+                }
+            }
         }
         item {
             OutlinedIconButton(

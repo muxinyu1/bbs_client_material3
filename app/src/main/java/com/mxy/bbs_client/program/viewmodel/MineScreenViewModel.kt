@@ -39,6 +39,11 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
             for (uri in uriList) {
                 res.add(toFile(uri, context))
             }
+            if (uriList.isEmpty()) {
+                Log.d("toFiles!!?", "uriList isEmpty")
+            } else {
+                Log.d("toFiles!!?", "麻麻的为什么会有图片")
+            }
             return res.toList()
         }
     }

@@ -8,13 +8,18 @@ import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.material3.*
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.disk.DiskCache
+import coil.imageLoader
+import coil.memory.MemoryCache
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.factory.ViewModelFactory
 import com.mxy.bbs_client.ui.screen.App
 import com.mxy.bbs_client.ui.theme.Bbs_clientTheme
 import com.mxy.bbs_client.utility.Client
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), ImageLoaderFactory {
 
     private val viewModelFactory by lazy {
         ViewModelFactory(app = application)
@@ -23,6 +28,7 @@ class MainActivity : ComponentActivity() {
     private val mineScreenViewModel by lazy {
         viewModelFactory.create(MineScreenViewModel::class.java)
     }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -41,4 +47,18 @@ class MainActivity : ComponentActivity() {
         mineScreenViewModel.closeDatabase()
         Client.closeDatabase()
     }
+
+    override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
+        .memoryCache {
+            MemoryCache.Builder(this)
+                .maxSizePercent(0.25)
+                .build()
+        }
+        .diskCache {
+            DiskCache.Builder()
+                .directory(this.cacheDir.resolve("image_cache"))
+                .maxSizePercent(0.02)
+                .build()
+        }
+        .build()
 }

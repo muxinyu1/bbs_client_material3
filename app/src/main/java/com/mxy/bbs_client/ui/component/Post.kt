@@ -24,6 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import com.google.gson.Gson
 import com.mxy.bbs_client.R
 import com.mxy.bbs_client.entity.action.ActionRequest
@@ -95,7 +98,7 @@ private fun Post(
                 )
                 //帖子图片
                 for (imgUrl in postImgUrls) {
-                    AsyncImage(
+                    SubcomposeAsyncImage(
                         model = imgUrl,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
@@ -103,7 +106,14 @@ private fun Post(
                             .clip(RoundedCornerShape(10.dp))
                             .border(2.dp, Color.Gray, RoundedCornerShape(10.dp))
                             .fillMaxWidth(),
-                    )
+                    ) {
+                        val state = painter.state
+                        if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                            CircularProgressIndicator()
+                        } else {
+                            SubcomposeAsyncImageContent()
+                        }
+                    }
                     Spacer(modifier = Modifier.height(20.dp))
                 }
                 //点赞图标

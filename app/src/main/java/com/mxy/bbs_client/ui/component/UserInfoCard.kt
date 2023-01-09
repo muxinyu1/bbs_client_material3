@@ -29,6 +29,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import com.mxy.bbs_client.program.ProgramState
 import com.mxy.bbs_client.program.viewmodel.*
 import com.mxy.bbs_client.utility.Client
@@ -284,14 +287,21 @@ private fun UserAvatar(
     avatarUrl: Any,
     modifier: Modifier
 ) {
-    AsyncImage(
+    SubcomposeAsyncImage(
         model = avatarUrl,
         contentDescription = "User Avatar",
         contentScale = ContentScale.Crop,
         modifier = modifier
             .clip(CircleShape)
             .border(1.dp, Color.Black, CircleShape)
-    )
+    ) {
+        val state = painter.state
+        if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+            CircularProgressIndicator()
+        } else {
+            SubcomposeAsyncImageContent()
+        }
+    }
 }
 
 @Composable
@@ -300,14 +310,21 @@ private fun UserAvatar(
     avatarUrl: Any,
     modifier: Modifier
 ) {
-    AsyncImage(
+    SubcomposeAsyncImage(
         model = uri ?: avatarUrl,
         contentDescription = "User Avatar",
         contentScale = ContentScale.Crop,
         modifier = modifier
             .clip(CircleShape)
             .border(1.dp, Color.Black, CircleShape)
-    )
+    ) {
+        val state = painter.state
+        if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+            CircularProgressIndicator()
+        } else {
+            SubcomposeAsyncImageContent()
+        }
+    }
 }
 
 @Composable
@@ -450,7 +467,7 @@ fun PostThumbnail(
     ) {
         Row {
             Column {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = userInfoState.avatarUrl,
                     contentDescription = "User Avatar",
                     contentScale = ContentScale.Crop,
@@ -460,7 +477,14 @@ fun PostThumbnail(
                         .clip(CircleShape)
                         .border(1.dp, Color.Black, CircleShape)
                         .align(alignment = CenterHorizontally)
-                )
+                ) {
+                    val state = painter.state
+                    if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                        CircularProgressIndicator()
+                    } else {
+                        SubcomposeAsyncImageContent()
+                    }
+                }
                 Text(
                     text = userInfoState.nickname!!,
                     fontSize = 12.sp,
@@ -470,7 +494,7 @@ fun PostThumbnail(
             }
             Row {
                 if (postState.images.isNotEmpty()) {
-                    AsyncImage(
+                    SubcomposeAsyncImage(
                         model = postState.images[0],
                         contentDescription = "Post Img",
                         contentScale = ContentScale.Crop,
@@ -479,7 +503,14 @@ fun PostThumbnail(
                             .padding(10.dp)
                             .clip(RoundedCornerShape(5.dp))
                             .align(alignment = CenterVertically)
-                    )
+                    ) {
+                        val state = painter.state
+                        if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                            CircularProgressIndicator()
+                        } else {
+                            SubcomposeAsyncImageContent()
+                        }
+                    }
                 }
                 Text(
                     text = postState.title!!,

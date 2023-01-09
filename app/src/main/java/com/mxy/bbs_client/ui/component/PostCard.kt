@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -20,6 +21,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import com.mxy.bbs_client.program.state.PostState
 import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 import compose.icons.FeatherIcons
@@ -82,9 +86,11 @@ fun PostCard(
 
 @Composable
 fun UserAndDate(avatarUrl: Any, username: String, date: String) {
-    Row(modifier = Modifier.padding(5.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(modifier = Modifier
+        .padding(5.dp)
+        .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Row {
-            AsyncImage(
+            SubcomposeAsyncImage(
                 model = avatarUrl,
                 contentDescription = "avatar",
                 contentScale = ContentScale.Crop,
@@ -94,7 +100,14 @@ fun UserAndDate(avatarUrl: Any, username: String, date: String) {
                     .clip(CircleShape)
                     .border(1.dp, Color.Black.copy(alpha = 0.5f), CircleShape)
                     .align(alignment = CenterVertically)
-            )
+            ) {
+                val state = painter.state
+                if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                    CircularProgressIndicator()
+                } else {
+                    SubcomposeAsyncImageContent()
+                }
+            }
             Text(
                 text = username,
                 fontWeight = FontWeight.Bold,
@@ -161,7 +174,7 @@ private fun CardContent(title: String, content: String, contentImgUrl: Any?) {
             overflow = TextOverflow.Ellipsis
         )
         if (contentImgUrl != null) {
-            AsyncImage(
+            SubcomposeAsyncImage(
                 model = contentImgUrl,
                 contentScale = ContentScale.Crop,
                 contentDescription = "content image",
@@ -169,7 +182,14 @@ private fun CardContent(title: String, content: String, contentImgUrl: Any?) {
                     .padding(5.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .fillMaxWidth()
-            )
+            ) {
+                val state = painter.state
+                if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                    CircularProgressIndicator()
+                } else {
+                    SubcomposeAsyncImageContent()
+                }
+            }
         }
     }
 

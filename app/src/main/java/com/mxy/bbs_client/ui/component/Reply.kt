@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -25,6 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import com.google.gson.Gson
 import com.mxy.bbs_client.R
 import com.mxy.bbs_client.entity.action.ActionRequest
@@ -32,7 +34,6 @@ import com.mxy.bbs_client.entity.review.Review
 import com.mxy.bbs_client.program.state.ReviewState
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
-import compose.icons.FeatherIcons
 import kotlinx.coroutines.launch
 
 val replyCardBorderStroke = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.7f))
@@ -58,8 +59,7 @@ fun Reply(
     imgUrls: List<Any>,
     floor: Int,
     date: String,
-    likeNum: Int,
-    onLikeClick: (String) -> Unit
+    likeNum: Int
 ) {
     val likeNumState = remember {
         mutableStateOf(likeNum)
@@ -78,7 +78,7 @@ fun Reply(
                 modifier = Modifier.fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = avatarUrl,
                     contentDescription = "avatar",
                     contentScale = ContentScale.Crop,
@@ -88,7 +88,14 @@ fun Reply(
                         .size(avatarSize)
                         .clip(CircleShape)
                         .border(1.dp, Color.Gray.copy(alpha = 0.5f), CircleShape)
-                )
+                ) {
+                    val state = painter.state
+                    if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                        CircularProgressIndicator()
+                    } else {
+                        SubcomposeAsyncImageContent()
+                    }
+                }
                 Column(modifier = Modifier.padding(10.dp)) {
                     IconButton(
                         onClick = {
@@ -158,14 +165,22 @@ fun Reply(
                 )
                 //回复中的图片
                 for (imgUrl in imgUrls) {
-                    AsyncImage(
+                    Log.d("回复中的图片", imgUrl as String)
+                    SubcomposeAsyncImage(
                         model = imgUrl, contentDescription = "reply img",
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
                             .border(1.dp, Color.Gray, RoundedCornerShape(10.dp))
                             .fillMaxWidth(),
                         contentScale = ContentScale.Crop
-                    )
+                    ) {
+                        val state = painter.state
+                        if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                            CircularProgressIndicator()
+                        } else {
+                            SubcomposeAsyncImageContent()
+                        }
+                    }
                     Spacer(modifier = Modifier.height(5.dp))
                 }
                 Spacer(modifier = Modifier.height(10.dp))
@@ -195,14 +210,13 @@ fun Reply(modifier: Modifier, floor: Int, isPostHost: Boolean, reviewState: Revi
     Reply(
         avatarUrl = reviewState.avatarUrl,
         nickname = reviewState.nickname,
+        isPostHost = isPostHost,
+        personalSign = reviewState.personalSign,
         content = reviewState.content,
         modifier = modifier,
         imgUrls = reviewState.images,
         floor = floor,
         date = reviewState.date,
-        personalSign = reviewState.personalSign,
-        onLikeClick = onReviewLikeClick,
-        likeNum = reviewState.likeNum,
-        isPostHost = isPostHost
+        likeNum = reviewState.likeNum
     )
 }
