@@ -99,13 +99,14 @@ fun PostCard(
 fun UserAndDate(avatarUrl: String, username: String, date: String) {
     Row(modifier = Modifier.padding(5.dp)) {
         AsyncImage(
-            model = avatarUrl, contentDescription = "avatar",
+            model = avatarUrl,
+            contentDescription = "avatar",
             contentScale = ContentScale.Crop,
             modifier = Modifier
+                .padding(5.dp)
                 .size(avatarSize)
                 .clip(CircleShape)
                 .border(1.dp, Color.Black.copy(alpha = 0.5f), CircleShape)
-                .padding(5.dp)
         )
         Text(
             text = username,
