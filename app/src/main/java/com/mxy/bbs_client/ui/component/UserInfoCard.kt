@@ -443,7 +443,7 @@ fun PostThumbnail(
             .fillMaxWidth()
             .clickable {
                 appViewModel.changeScreenTo(0)
-                homeScreenViewModel.openPost(postState.id!!)
+                homeScreenViewModel.openPost(postState.id)
             },
         shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, Color.Black)

@@ -32,6 +32,6 @@ fun HomeScreen(homeScreenViewModel: HomeScreenViewModel) {
         enter = slideInHorizontally { it },
         exit = slideOutHorizontally { it }
     ) {
-        Post(postId = homeScreenState.openedPost, modifier = Modifier.padding(10.dp))
+        Post(postState = homeScreenState.postState, modifier = Modifier.padding(10.dp))
     }
 }

@@ -12,9 +12,9 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.material.placeholder
-import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.mxy.bbs_client.program.state.PostState
 import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 
 private val PostCardPadding = PaddingValues(5.dp)
@@ -23,7 +23,7 @@ private const val EmptyPostId = "正在加载帖子"
 
 @Composable
 fun PostCardList(
-    postList: List<String>,
+    postList: List<PostState>,
     modifier: Modifier,
     homeScreenViewModel: HomeScreenViewModel
 ) {
@@ -32,10 +32,10 @@ fun PostCardList(
 
 @Composable
 private fun PostList(
-    postIds: List<String>,
+    postStates: List<PostState>,
     modifier: Modifier,
     homeScreenViewModel: HomeScreenViewModel,
-    lazyLoad: Boolean = false
+    lazyLoad: Boolean = true
 ) {
     val isRefreshing by homeScreenViewModel.isRefreshing.collectAsState()
     val isLoading by homeScreenViewModel.isLoading.collectAsState()
@@ -47,38 +47,35 @@ private fun PostList(
     {
         if (lazyLoad) {
             LazyColumn {
-                items(postIds.size) { i: Int ->
-                    if (postIds[i] != EmptyPostId) {
-                        PostCard(
-                            postId = postIds[i],
-                            modifier = Modifier
-                                .placeholder(isLoading, highlight = PlaceholderHighlight.fade())
-                                .padding(2.dp),
-                            homeScreenViewModel = homeScreenViewModel
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
+                items(postStates.size) { i: Int ->
+                    PostCard(
+                        postState = postStates[i],
+                        modifier = Modifier
+                            .placeholder(isLoading, highlight = PlaceholderHighlight.fade())
+                            .padding(2.dp),
+                        homeScreenViewModel = homeScreenViewModel
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
                 }
             }
         } else {
             Column(modifier = modifier.verticalScroll(rememberScrollState())) {
-                for (postId in postIds) {
-                    if (postId != EmptyPostId) {
-                        PostCard(
-                            postId = postId,
-                            modifier = Modifier
-                                .placeholder(
-                                    isLoading,
-                                    highlight = PlaceholderHighlight.fade()
-                                )
-                                .padding(2.dp),
-                            homeScreenViewModel = homeScreenViewModel
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
+                for (postId in postStates) {
+                    PostCard(
+                        postState = postId,
+                        modifier = Modifier
+                            .placeholder(
+                                isLoading,
+                                highlight = PlaceholderHighlight.fade()
+                            )
+                            .padding(2.dp),
+                        homeScreenViewModel = homeScreenViewModel
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
         }
     }
-
 }
+

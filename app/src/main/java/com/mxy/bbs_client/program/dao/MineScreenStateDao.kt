@@ -1,9 +1,7 @@
 package com.mxy.bbs_client.program.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.mxy.bbs_client.program.state.MineScreenState
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @Dao
 interface MineScreenStateDao {

@@ -9,9 +9,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,13 +20,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mxy.bbs_client.program.state.PostState
 import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
-import com.mxy.bbs_client.utility.Client
-import com.mxy.bbs_client.utility.Utility
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.MessageCircle
 import compose.icons.feathericons.ThumbsUp
-import kotlinx.coroutines.launch
 
 val cardCornerShape = RoundedCornerShape(3)
 val avatarSize = 40.dp
@@ -66,35 +61,23 @@ fun PostCard(
 
 @Composable
 fun PostCard(
-    postId: String,
+    postState: PostState,
     modifier: Modifier,
     homeScreenViewModel: HomeScreenViewModel
 ) {
-    val defaultUserInfoState = remember {
-        mutableStateOf(DefaultUserInfo)
-    }
-    val defaultPostState = remember {
-        mutableStateOf(DefaultPost)
-    }
     PostCard(
-        postId = postId,
         modifier = modifier,
-        avatarUrl = defaultUserInfoState.value.avatarUrl!!,
-        nickname = defaultUserInfoState.value.nickname!!,
-        date = defaultPostState.value.date!!,
-        reviewNum = defaultPostState.value.reviews.size,
-        likeNum = defaultPostState.value.likeNum!!,
-        title = defaultPostState.value.title!!,
-        content = defaultPostState.value.content!!,
-        contentImgUrl = if (defaultPostState.value.images.isEmpty()) null else defaultPostState.value.images[0],
+        postId = postState.postId,
+        avatarUrl = postState.avatarUrl,
+        nickname = postState.nickname,
+        date = postState.date,
+        reviewNum = postState.reviewNum,
+        likeNum = postState.likeNum,
+        title = postState.title,
+        content = postState.content,
+        contentImgUrl = if (postState.images.isEmpty()) null else postState.images[0],
         homeScreenViewModel = homeScreenViewModel
     )
-    with(Utility.IOCoroutineScope) {
-        launch {
-            defaultPostState.value = Client.getPost(postId).post!!
-            defaultUserInfoState.value = Client.getUserInfo(defaultPostState.value.owner).userInfo!!
-        }
-    }
 }
 
 @Composable

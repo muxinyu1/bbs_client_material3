@@ -1,5 +1,7 @@
 package com.mxy.bbs_client.utility
 
+import android.app.Application
+import androidx.room.Room
 import com.google.gson.Gson
 import com.mxy.bbs_client.entity.action.ActionRequest
 import com.mxy.bbs_client.entity.action.ActionResponse
@@ -12,6 +14,8 @@ import com.mxy.bbs_client.entity.user.User
 import com.mxy.bbs_client.entity.user.UserResponse
 import com.mxy.bbs_client.entity.user.UserResponseFailedReason
 import com.mxy.bbs_client.entity.userinfo.UserInfoResponse
+import com.mxy.bbs_client.program.db.CacheDatabase
+import com.mxy.bbs_client.program.repository.CacheRepository
 import com.mxy.bbs_client.serverinfo.jsonMediaType
 import com.mxy.bbs_client.serverinfo.serverUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -30,16 +34,43 @@ object Client {
             .writeTimeout(6000, TimeUnit.SECONDS)
             .build()
     }
+
+    private lateinit var _cacheDatabase: CacheDatabase
+
+    private lateinit var cacheRepository: CacheRepository
+
+    fun createCacheDatabase(app: Application) {
+        _cacheDatabase = Room.databaseBuilder(app, CacheDatabase::class.java, "app_data.db")
+            .fallbackToDestructiveMigration().build()
+        cacheRepository = CacheRepository(_cacheDatabase)
+    }
+
+    fun closeDatabase() {
+        cacheRepository.closeDatabase()
+    }
+
     private val gson by lazy {
         Gson()
     }
 
     fun getUser(username: String?): UserResponse {
+        if (username == null) {
+            return UserResponse(false, UserResponseFailedReason.USERNAME_DOES_NOT_EXIST, null)
+        }
+        val localUser = cacheRepository.getUser(username)
+        if (localUser != null) {
+            return UserResponse(true, null, localUser)
+        }
         val requestBody =
             gson.toJson(User(username, null)).toRequestBody(jsonMediaType.toMediaType())
         val request = Request.Builder().url("$serverUrl/user/query").post(requestBody).build()
         val userResponse = client.newCall(request).execute()
-        return gson.fromJson(userResponse.body?.string(), UserResponse::class.java)
+        val remoteUserResponse =
+            gson.fromJson(userResponse.body?.string(), UserResponse::class.java)
+        if (remoteUserResponse.success!!) {
+            cacheRepository.addUser(remoteUserResponse.user!!)
+        }
+        return remoteUserResponse
     }
 
     fun getPostList(): PostListResponse {
@@ -52,6 +83,10 @@ object Client {
         if (postId == null) {
             return PostResponse(false, PostResponseFailedReason.POST_DOES_NOT_EXIST, null)
         }
+        val localPost = cacheRepository.getPost(postId)
+        if (localPost != null) {
+            return PostResponse(true, null, localPost)
+        }
         val requestBody = "".toRequestBody(null)
         //这些form-data对应PostRequest数据类
         val multipartBody = MultipartBody.Builder().setType(MultipartBody.FORM)
@@ -62,7 +97,12 @@ object Client {
             .build()
         val request = Request.Builder().url("$serverUrl/post/query").post(multipartBody).build()
         val postResponse = client.newCall(request).execute()
-        return gson.fromJson(postResponse.body?.string(), PostResponse::class.java)
+        val remotePostResponse =
+            gson.fromJson(postResponse.body?.string(), PostResponse::class.java)
+        if (remotePostResponse.success!!) {
+            cacheRepository.addPost(remotePostResponse.post!!)
+        }
+        return remotePostResponse
     }
 
     fun getUserInfo(username: String?): UserInfoResponse {
@@ -149,7 +189,13 @@ object Client {
         return gson.fromJson(reviewResponse.body?.string(), ReviewResponse::class.java)
     }
 
-    fun addPost(id: String, owner: String, title: String, content: String, images: List<File>): PostResponse {
+    fun addPost(
+        id: String,
+        owner: String,
+        title: String,
+        content: String,
+        images: List<File>
+    ): PostResponse {
         val multipartBodyBuilder = MultipartBody.Builder().setType(MultipartBody.FORM)
             .addFormDataPart("id", id)
             .addFormDataPart("owner", owner)

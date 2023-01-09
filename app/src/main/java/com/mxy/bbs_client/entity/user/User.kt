@@ -1,7 +1,10 @@
 package com.mxy.bbs_client.entity.user
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity(tableName = "User")
 data class User(
-    val username: String?,
+    @PrimaryKey val username: String,
     val password: String?
 )

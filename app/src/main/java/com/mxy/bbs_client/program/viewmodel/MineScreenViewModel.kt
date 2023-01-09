@@ -48,7 +48,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
             context = app,
             klass = MineScreenStateDataBase::class.java,
             name = "data.db"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     private val mineScreenStateRepository = MineScreenStateRepository(mineScreenStateDataBase)
@@ -187,7 +187,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun closeDataBase() {
+    fun closeDatabase() {
         mineScreenStateRepository.closeDataBase()
     }
 }

@@ -29,6 +29,7 @@ import com.google.gson.Gson
 import com.mxy.bbs_client.R
 import com.mxy.bbs_client.entity.action.ActionRequest
 import com.mxy.bbs_client.entity.review.Review
+import com.mxy.bbs_client.program.state.ReviewState
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
 import compose.icons.FeatherIcons
@@ -48,7 +49,6 @@ private val onReviewLikeClick: (String?) -> Unit = {
 
 @Composable
 fun Reply(
-    replyId: String,
     avatarUrl: Any,
     nickname: String,
     isPostHost: Boolean,
@@ -95,7 +95,7 @@ fun Reply(
                             if (!iLikeState.value) {
                                 iLikeState.value = true
                                 likeNumState.value++
-                                onLikeClick(replyId)
+                                /*TODO:喜欢该评论*/
                             }
                         },
                         modifier = Modifier.align(alignment = CenterHorizontally)
@@ -191,31 +191,18 @@ fun Reply(
 }
 
 @Composable
-fun Reply(replyId: String, modifier: Modifier, floor: Int, postHost: String) {
-    val reviewState = remember {
-        mutableStateOf(DefaultReview)
-    }
-    val userInfoState = remember {
-        mutableStateOf(DefaultUserInfo)
-    }
+fun Reply(modifier: Modifier, floor: Int, isPostHost: Boolean, reviewState: ReviewState) {
     Reply(
-        avatarUrl = userInfoState.value.avatarUrl!!,
-        nickname = userInfoState.value.nickname!!,
-        content = reviewState.value.content!!,
+        avatarUrl = reviewState.avatarUrl,
+        nickname = reviewState.nickname,
+        content = reviewState.content,
         modifier = modifier,
-        imgUrls = reviewState.value.images!!,
+        imgUrls = reviewState.images,
         floor = floor,
-        date = reviewState.value.date!!,
-        personalSign = userInfoState.value.personalSign!!,
-        replyId = replyId,
+        date = reviewState.date,
+        personalSign = reviewState.personalSign,
         onLikeClick = onReviewLikeClick,
-        likeNum = reviewState.value.likeNum!!,
-        isPostHost = postHost == userInfoState.value.username
+        likeNum = reviewState.likeNum,
+        isPostHost = isPostHost
     )
-    with(Utility.IOCoroutineScope) {
-        launch {
-            reviewState.value = Client.getReview(replyId).review!!
-            userInfoState.value = Client.getUserInfo(reviewState.value.username).userInfo!!
-        }
-    }
 }

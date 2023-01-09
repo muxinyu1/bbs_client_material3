@@ -12,6 +12,7 @@ import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.factory.ViewModelFactory
 import com.mxy.bbs_client.ui.screen.App
 import com.mxy.bbs_client.ui.theme.Bbs_clientTheme
+import com.mxy.bbs_client.utility.Client
 
 class MainActivity : ComponentActivity() {
 
@@ -27,6 +28,7 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Client.createCacheDatabase(application)
         setContent {
             Bbs_clientTheme {
                 App(mineScreenViewModel = mineScreenViewModel)
@@ -36,6 +38,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        mineScreenViewModel.closeDataBase()
+        mineScreenViewModel.closeDatabase()
+        Client.closeDatabase()
     }
 }
