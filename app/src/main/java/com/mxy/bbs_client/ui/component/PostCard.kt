@@ -38,14 +38,14 @@ val avatarSize = 40.dp
 fun PostCard(
     postId: String,
     modifier: Modifier,
-    avatarUrl: String,
+    avatarUrl: Any,
     nickname: String,
     date: String,
     reviewNum: Int,
     likeNum: Int,
     title: String,
     content: String,
-    contentImgUrl: String?,
+    contentImgUrl: Any?,
     homeScreenViewModel: HomeScreenViewModel
 ) {
     OutlinedCard(
@@ -98,7 +98,7 @@ fun PostCard(
 }
 
 @Composable
-fun UserAndDate(avatarUrl: String, username: String, date: String) {
+fun UserAndDate(avatarUrl: Any, username: String, date: String) {
     Row(modifier = Modifier.padding(5.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Row {
             AsyncImage(
@@ -160,7 +160,7 @@ private fun ReviewAndLike(reviewNum: Int, likeNum: Int) {
 }
 
 @Composable
-private fun CardContent(title: String, content: String, contentImgUrl: String?) {
+private fun CardContent(title: String, content: String, contentImgUrl: Any?) {
     Column(modifier = Modifier.padding(5.dp)) {
         Text(
             text = title,

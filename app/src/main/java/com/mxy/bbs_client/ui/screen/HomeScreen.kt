@@ -23,7 +23,7 @@ fun HomeScreen(homeScreenViewModel: HomeScreenViewModel) {
     ) {
         PostCardList(
             homeScreenState.postList,
-            modifier = Modifier.padding(10.dp),
+            modifier = Modifier.padding(5.dp),
             homeScreenViewModel
         )
     }

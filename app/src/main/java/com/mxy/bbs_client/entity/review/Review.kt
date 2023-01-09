@@ -6,6 +6,6 @@ data class Review(
     val date: String?,
     val username: String?,
     val content: String?,
-    val images: List<String>?,
+    val images: List<Any>?,
     val likeNum: Int?
 )

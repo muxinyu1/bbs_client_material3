@@ -6,7 +6,7 @@ data class Post(
     val owner: String?,
     val title: String?,
     val content: String?,
-    val images: List<String>,
+    val images: List<Any>,
     val likeNum: Int?,
     val reviews: List<String>
 )

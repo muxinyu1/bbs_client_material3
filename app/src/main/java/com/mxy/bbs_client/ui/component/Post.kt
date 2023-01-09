@@ -67,14 +67,14 @@ const val AlreadyBottom = "到底了~~"
 private fun Post(
     postId: String,
     postHost: String,
-    avatarUrl: String,
+    avatarUrl: Any,
     nickname: String,
     date: String,
     modifier: Modifier,
     title: String,
     content: String,
     onLikeClick: (postId: String?) -> Unit,
-    postImgUrls: List<String>,
+    postImgUrls: List<Any>,
     likeNum: Int,
     iLike: Boolean,
     replyIds: List<String>

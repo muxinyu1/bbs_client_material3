@@ -49,13 +49,13 @@ private val onReviewLikeClick: (String?) -> Unit = {
 @Composable
 fun Reply(
     replyId: String,
-    avatarUrl: String,
+    avatarUrl: Any,
     nickname: String,
     isPostHost: Boolean,
     personalSign: String,
     content: String,
     modifier: Modifier,
-    imgUrls: List<String>,
+    imgUrls: List<Any>,
     floor: Int,
     date: String,
     likeNum: Int,

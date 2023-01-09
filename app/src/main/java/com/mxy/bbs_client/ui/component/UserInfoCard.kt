@@ -99,7 +99,7 @@ private fun applyChanges(
                     }
                 val avatarUrl =
                     Client.getUserInfo(username).userInfo!!.avatarUrl
-                FileUtils.copyURLToFile(URL(avatarUrl), avatarTmpFile)
+                FileUtils.copyURLToFile(URL(avatarUrl as String?), avatarTmpFile)
                 avatarTmpFile
             }
             val userInfoResponse = Client.updateUserInfo(
@@ -122,7 +122,7 @@ private fun applyChanges(
 
 @Composable
 fun UserAvatarNicknameAndSign(
-    avatarUrl: String,
+    avatarUrl: Any,
     nickname: String,
     personalSign: String,
     modifier: Modifier
@@ -281,7 +281,7 @@ fun Header(imageVector: ImageVector, text: String) {
 
 @Composable
 private fun UserAvatar(
-    avatarUrl: String,
+    avatarUrl: Any,
     modifier: Modifier
 ) {
     AsyncImage(
@@ -297,7 +297,7 @@ private fun UserAvatar(
 @Composable
 private fun UserAvatar(
     uri: Uri?,
-    avatarUrl: String,
+    avatarUrl: Any,
     modifier: Modifier
 ) {
     AsyncImage(
@@ -346,7 +346,7 @@ private fun UserPosts(
 @Composable
 private fun EditUserInfo(
     modifier: Modifier,
-    avatarUrl: String,
+    avatarUrl: Any,
     mineScreenViewModel: MineScreenViewModel,
     username: String
 ) {
