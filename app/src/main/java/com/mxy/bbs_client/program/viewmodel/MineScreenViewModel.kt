@@ -1,21 +1,27 @@
 package com.mxy.bbs_client.program.viewmodel
 
+import android.app.Application
 import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.room.Room
 import com.google.gson.Gson
+import com.mxy.bbs_client.program.db.MineScreenStateDataBase
+import com.mxy.bbs_client.program.repository.MineScreenStateRepository
 import com.mxy.bbs_client.program.state.MineScreenState
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-class MineScreenViewModel : ViewModel() {
+class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         private const val NotLoginError = "请先登录"
         private const val PleaseTryAgain = "请再试一次"
@@ -37,19 +43,63 @@ class MineScreenViewModel : ViewModel() {
         }
     }
 
-    private val _mineScreenState = MutableStateFlow(MineScreenState(false, null, 0))
-    val mineScreenState = _mineScreenState.asStateFlow()
+    private val mineScreenStateDataBase by lazy {
+        Room.databaseBuilder(
+            context = app,
+            klass = MineScreenStateDataBase::class.java,
+            name = "data.db"
+        ).build()
+    }
+
+    private val mineScreenStateRepository = MineScreenStateRepository(mineScreenStateDataBase)
+
+    init {
+        viewModelScope.launch {
+            val stateInDateBase = mineScreenStateRepository.getMineScreenState()
+            if (stateInDateBase != null) {
+                _mineScreenState = MutableStateFlow(stateInDateBase)
+            } else {
+                //第一次启动App
+                val notLogin = MineScreenState(
+                    login = false,
+                    username = null,
+                    placeholder = 0
+                )
+                _mineScreenState = MutableStateFlow(notLogin)
+                mineScreenStateRepository.add(notLogin)
+            }
+            mineScreenState = _mineScreenState.asStateFlow()
+        }
+    }
+
+
+    private lateinit var _mineScreenState: MutableStateFlow<MineScreenState>
+
+    lateinit var  mineScreenState: StateFlow<MineScreenState>
+
     fun loginSuccessfully(username: String) {
-        _mineScreenState.value = MineScreenState(true, username, 0)
+        val login = MineScreenState(login = true, username = username, placeholder = 0)
+        _mineScreenState.value = login
+        viewModelScope.launch {
+            mineScreenStateRepository.update(login)
+        }
     }
 
     fun logout() {
-        _mineScreenState.value = MineScreenState(false, null, 0)
+        val logout = MineScreenState(login = false, username = null, placeholder = 0)
+        _mineScreenState.value = logout
+        viewModelScope.launch {
+            mineScreenStateRepository.update(logout)
+        }
     }
 
     fun refresh(username: String) {
         _mineScreenState.value =
-            MineScreenState(true, username, 1 - _mineScreenState.value.placeholder)
+            MineScreenState(
+                login = true,
+                username = username,
+                placeholder = 1 - _mineScreenState.value.placeholder
+            )
     }
 
     fun sendPost(title: String, content: String, images: List<Uri>, context: Context) {
