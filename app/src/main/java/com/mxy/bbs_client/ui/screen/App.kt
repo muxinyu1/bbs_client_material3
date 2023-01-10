@@ -71,7 +71,7 @@ fun App(
                 Text(text = "")
             }
         },
-        sheetState = if (bottomSheetIsOpen) sheetState.apply {
+        sheetState = if (bottomSheetIsOpen.first()) sheetState.apply {
             coroutineScope.launch {
                 sheetState.show()
             }

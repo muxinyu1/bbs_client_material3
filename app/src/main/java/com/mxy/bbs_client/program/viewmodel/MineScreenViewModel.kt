@@ -96,16 +96,16 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
 
     private lateinit var _mineScreenState: MutableStateFlow<MineScreenState>
 
-    private val _bottomSheetState = MutableStateFlow(false)
+    private val _bottomSheetState = MutableStateFlow(listOf(false, false))
 
     val bottomSheetState = _bottomSheetState.asStateFlow()
 
     fun openBottomSheet() {
-        _bottomSheetState.value = true
+        _bottomSheetState.value = listOf(true, !_bottomSheetState.value.last())
     }
 
     private fun closeBottomSheet()  {
-        _bottomSheetState.value = false
+        _bottomSheetState.value = listOf(false, !_bottomSheetState.value.last())
     }
 
     lateinit var mineScreenState: StateFlow<MineScreenState>
