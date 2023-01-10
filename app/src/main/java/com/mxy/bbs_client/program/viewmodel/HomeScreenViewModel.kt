@@ -12,6 +12,33 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeScreenViewModel : ViewModel() {
+    companion object {
+        fun toPostStateList(postIds: List<String>): List<PostState> {
+            val res = mutableListOf<PostState>()
+            for (postId in postIds) {
+                val postResponse = Client.getPost(postId)
+                val userInfoResponse = Client.getUserInfo(postResponse.post!!.owner)
+                val post = postResponse.post
+                val userInfo = userInfoResponse.userInfo!!
+                res.add(
+                    PostState(
+                        postId = postId,
+                        owner = post.owner!!,
+                        title = post.title!!,
+                        date = post.date!!,
+                        content = post.content!!,
+                        avatarUrl = userInfo.avatarUrl!!,
+                        images = post.images,
+                        likeNum = post.likeNum!!,
+                        reviewNum = post.reviews.size,
+                        nickname = userInfo.nickname!!,
+                        reviews = listOf()
+                    )
+                )
+            }
+            return res
+        }
+    }
     private val _homeScreenState = MutableStateFlow(HomeScreenState(postList = listOf()))
     val homeScreenState = _homeScreenState.asStateFlow()
 
@@ -40,33 +67,6 @@ class HomeScreenViewModel : ViewModel() {
             )
         }
     }
-
-    private fun toPostStateList(postIds: List<String>): List<PostState> {
-        val res = mutableListOf<PostState>()
-        for (postId in postIds) {
-            val postResponse = Client.getPost(postId)
-            val userInfoResponse = Client.getUserInfo(postResponse.post!!.owner)
-            val post = postResponse.post
-            val userInfo = userInfoResponse.userInfo!!
-            res.add(
-                PostState(
-                    postId = postId,
-                    owner = post.owner!!,
-                    title = post.title!!,
-                    date = post.date!!,
-                    content = post.content!!,
-                    avatarUrl = userInfo.avatarUrl!!,
-                    images = post.images,
-                    likeNum = post.likeNum!!,
-                    reviewNum = post.reviews.size,
-                    nickname = userInfo.nickname!!,
-                    reviews = listOf()
-                )
-            )
-        }
-        return res
-    }
-
 
     private fun toReviewStateList(reviewIds: List<String>): List<ReviewState> {
         val res = mutableListOf<ReviewState>()

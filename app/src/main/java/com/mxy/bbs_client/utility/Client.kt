@@ -38,12 +38,6 @@ object Client {
             .build()
     }
 
-    lateinit var imageLoader: ImageLoader
-
-    fun injectImageLoader(loader: ImageLoader) {
-        imageLoader = loader
-    }
-
     private lateinit var cacheDatabase: CacheDatabase
 
     private lateinit var cacheRepository: CacheRepository

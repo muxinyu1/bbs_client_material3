@@ -1,9 +1,7 @@
 package com.mxy.bbs_client.ui.component
 
-import android.content.Context
 import android.net.Uri
 import android.os.Build
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -28,25 +26,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import com.mxy.bbs_client.program.ProgramState
+import com.mxy.bbs_client.program.state.PostState
+import com.mxy.bbs_client.program.state.UserInfoState
 import com.mxy.bbs_client.program.viewmodel.*
-import com.mxy.bbs_client.utility.Client
-import com.mxy.bbs_client.utility.Utility
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.LogOut
 import compose.icons.feathericons.Send
 import compose.icons.feathericons.Star
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.apache.commons.io.FileUtils
-import java.io.File
-import java.net.URL
 
 private const val MyCollections = "我的收藏"
 private const val MyPosts = "我的帖子"
@@ -59,69 +50,10 @@ private const val SubmitChanges = "提交更改"
 private const val PickAnImage = "image/*"
 private const val NicknameEmptyError = "昵称不能为空"
 private const val NicknameMaxLen = 15
-private const val PersonalSignMaxLen = 10
-private const val PersonalSignTooLongError = "个人签名长度不能超过$PersonalSignMaxLen"
+private const val PersonalSignMaxLen = 12
 private const val NicknameTooLongError = "昵称长度不能超过$NicknameMaxLen"
-private const val ModifySuccess = "更改成功"
+private const val personalSignTooLongError = "个人签名长度不能超过$PersonalSignMaxLen"
 
-
-@RequiresApi(Build.VERSION_CODES.O)
-private fun applyChanges(
-    context: Context,
-    username: String,
-    newNickname: String,
-    newPersonalSign: String,
-    newAvtarUri: Uri?,
-    mineScreenViewModel: MineScreenViewModel
-) {
-    if (newNickname.isEmpty()) {
-        Toast.makeText(context, NicknameEmptyError, Toast.LENGTH_SHORT).show()
-        return
-    }
-    if (newNickname.length > NicknameMaxLen) {
-        Toast.makeText(context, NicknameTooLongError, Toast.LENGTH_SHORT).show()
-        return
-    }
-    if (newPersonalSign.length > PersonalSignMaxLen) {
-        Toast.makeText(context, PersonalSignTooLongError, Toast.LENGTH_SHORT).show()
-        return
-    }
-    with(Utility.IOCoroutineScope) {
-        launch {
-            val avatarFile = if (newAvtarUri != null) {
-                val inputStream = context.contentResolver.openInputStream(newAvtarUri)
-                val avatarTmpFile = withContext(Dispatchers.IO) {
-                    File.createTempFile("tmpAvatar", null)
-                }
-                FileUtils.copyInputStreamToFile(inputStream, avatarTmpFile)
-                avatarTmpFile
-            } else {
-                val avatarTmpFile =
-                    withContext(Dispatchers.IO) {
-                        File.createTempFile("tmpAvatar", null)
-                    }
-                val avatarUrl =
-                    Client.getUserInfo(username).userInfo!!.avatarUrl
-                FileUtils.copyURLToFile(URL(avatarUrl as String?), avatarTmpFile)
-                avatarTmpFile
-            }
-            val userInfoResponse = Client.updateUserInfo(
-                username,
-                newNickname,
-                newPersonalSign,
-                avatarFile
-            )
-            with(Utility.UICoroutineScope) {
-                launch {
-                    if (userInfoResponse.success != null && userInfoResponse.success) {
-                        Toast.makeText(context, ModifySuccess, Toast.LENGTH_SHORT).show()
-                        mineScreenViewModel.refresh(username)
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun UserAvatarNicknameAndSign(
@@ -164,13 +96,12 @@ private fun PersonalSign(
 @Composable
 fun UserInfoCard(
     modifier: Modifier,
-    userInfoViewModel: UserInfoViewModel,
+    userInfoState: UserInfoState,
     mineScreenViewModel: MineScreenViewModel,
     appViewModel: AppViewModel,
     homeScreenViewModel: HomeScreenViewModel,
     visible: Boolean
 ) {
-    val userInfoState by userInfoViewModel.userInfoState.collectAsState()
     val density = LocalDensity.current
     AnimatedVisibility(
         visible = visible,
@@ -185,9 +116,9 @@ fun UserInfoCard(
     ) {
         Column(modifier = modifier) {
             UserAvatarNicknameAndSign(
-                avatarUrl = userInfoState.avatarUrl!!,
-                nickname = userInfoState.nickname!!,
-                personalSign = userInfoState.personalSign!!,
+                avatarUrl = userInfoState.avatarUrl,
+                nickname = userInfoState.nickname,
+                personalSign = userInfoState.personalSign,
                 modifier = Modifier.padding(10.dp)
             )
             //我的帖子
@@ -198,7 +129,7 @@ fun UserInfoCard(
                 }
             ) {
                 UserPosts(
-                    postIds = userInfoState.myPosts,
+                    postStates = userInfoState.myPosts,
                     modifier = Modifier.padding(5.dp),
                     appViewModel = appViewModel,
                     homeScreenViewModel = homeScreenViewModel
@@ -212,7 +143,7 @@ fun UserInfoCard(
                 }
             ) {
                 UserPosts(
-                    postIds = userInfoState.myCollections,
+                    postStates = userInfoState.myCollections,
                     modifier = Modifier.padding(5.dp),
                     homeScreenViewModel = homeScreenViewModel,
                     appViewModel = appViewModel
@@ -227,9 +158,8 @@ fun UserInfoCard(
             ) {
                 EditUserInfo(
                     modifier = Modifier.padding(10.dp),
-                    avatarUrl = userInfoState.avatarUrl!!,
-                    mineScreenViewModel = mineScreenViewModel,
-                    username = userInfoViewModel.username
+                    avatarUrl = userInfoState.avatarUrl,
+                    mineScreenViewModel = mineScreenViewModel
                 )
             }
             //退出登录
@@ -342,16 +272,16 @@ private fun UserNickname(
 
 @Composable
 private fun UserPosts(
-    postIds: List<String>,
+    postStates: List<PostState>,
     modifier: Modifier,
     appViewModel: AppViewModel,
     homeScreenViewModel: HomeScreenViewModel
 ) {
     Column(modifier = modifier) {
-        for (postId in postIds) {
+        for (postState in postStates) {
             PostThumbnail(
                 modifier = Modifier.padding(10.dp),
-                postThumbnailViewModel = PostThumbnailViewModel(postId),
+                postState = postState,
                 homeScreenViewModel = homeScreenViewModel,
                 appViewModel = appViewModel
             )
@@ -364,27 +294,29 @@ private fun UserPosts(
 private fun EditUserInfo(
     modifier: Modifier,
     avatarUrl: Any,
-    mineScreenViewModel: MineScreenViewModel,
-    username: String
+    mineScreenViewModel: MineScreenViewModel
 ) {
     val context = LocalContext.current
-    val newNicknameState = remember {
+    var newNickname by remember {
         mutableStateOf("")
     }
-    val newPersonalSignState = remember {
+    var newPersonalSign by remember {
         mutableStateOf("")
     }
-    val avtarUriState = remember {
+    var newAvtarUri by remember {
         mutableStateOf<Uri?>(null)
+    }
+    var showError by remember {
+        mutableStateOf(false)
     }
     val avatarPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
-            avtarUriState.value = it
+            newAvtarUri = it
             ProgramState.UserInfoState.newAvatar = it
         }
     Column(modifier = modifier) {
         UserAvatar(
-            uri = avtarUriState.value,
+            uri = newAvtarUri,
             avatarUrl = avatarUrl,
             modifier = Modifier
                 .clip(CircleShape)
@@ -401,10 +333,21 @@ private fun EditUserInfo(
             modifier = Modifier
                 .padding(5.dp)
                 .align(alignment = CenterHorizontally),
-            value = newNicknameState.value,
+            value = newNickname,
             onValueChange = {
-                newNicknameState.value = it
-                ProgramState.UserInfoState.newNickname = it
+                newNickname = it
+            },
+            isError = if (showError) newNickname.length > NicknameMaxLen || newNickname.isBlank() else false,
+            supportingText = {
+                if (showError) {
+                    Column {
+                        AnimatedText(visible = newNickname.isBlank(), text = NicknameEmptyError)
+                        AnimatedText(
+                            visible = newNickname.length > NicknameMaxLen,
+                            text = NicknameTooLongError
+                        )
+                    }
+                }
             }
         )
         //新签名
@@ -413,10 +356,18 @@ private fun EditUserInfo(
             modifier = Modifier
                 .padding(5.dp)
                 .align(alignment = CenterHorizontally),
-            value = newPersonalSignState.value,
+            value = newPersonalSign,
             onValueChange = {
-                newPersonalSignState.value = it
-                ProgramState.UserInfoState.newPersonalSign = it
+                newPersonalSign = it
+            },
+            isError = if (showError) newPersonalSign.length > PersonalSignMaxLen else false,
+            supportingText = {
+                if (showError) {
+                    AnimatedText(
+                        visible = newPersonalSign.length > PersonalSignMaxLen,
+                        text = personalSignTooLongError
+                    )
+                }
             }
         )
         //提交按钮
@@ -425,14 +376,19 @@ private fun EditUserInfo(
                 .align(alignment = CenterHorizontally)
                 .padding(5.dp),
             onClick = {
-                applyChanges(
-                    context,
-                    username,
-                    newNicknameState.value,
-                    newPersonalSignState.value,
-                    avtarUriState.value,
-                    mineScreenViewModel
-                )
+                val enabled = newNickname.isNotBlank()
+                        && newNickname.length <= NicknameMaxLen
+                        && newPersonalSign.length <= PersonalSignMaxLen
+                if (!enabled) {
+                    showError = true
+                } else {
+                    mineScreenViewModel.updateUserInfo(
+                        context = context,
+                        newNickname = newNickname,
+                        newPersonalSign = newPersonalSign,
+                        newAvtarUri = newAvtarUri
+                    )
+                }
             },
             shape = RoundedCornerShape(10.dp),
         ) {
@@ -451,24 +407,22 @@ fun PostThumbnail(
     modifier: Modifier,
     appViewModel: AppViewModel,
     homeScreenViewModel: HomeScreenViewModel,
-    postThumbnailViewModel: PostThumbnailViewModel
+    postState: PostState
 ) {
-    val postState by postThumbnailViewModel.postState.collectAsState()
-    val userInfoState by postThumbnailViewModel.userInfoState.collectAsState()
     OutlinedCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
                 appViewModel.changeScreenTo(0)
-                homeScreenViewModel.openPost(postState.id)
+                homeScreenViewModel.openPost(postState.postId)
             },
         shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, Color.Black)
     ) {
         Row {
-            Column {
+            Column(modifier = Modifier.align(alignment = CenterVertically)) {
                 SubcomposeAsyncImage(
-                    model = userInfoState.avatarUrl,
+                    model = postState.avatarUrl,
                     contentDescription = "User Avatar",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -486,13 +440,13 @@ fun PostThumbnail(
                     }
                 }
                 Text(
-                    text = userInfoState.nickname!!,
+                    text = postState.nickname,
                     fontSize = 12.sp,
                     color = Color.Gray,
-                    modifier = Modifier.align(alignment = CenterHorizontally)
+                    modifier = Modifier.padding(5.dp).align(alignment = CenterHorizontally)
                 )
             }
-            Row {
+            Row(modifier = Modifier.align(alignment = CenterVertically)) {
                 if (postState.images.isNotEmpty()) {
                     SubcomposeAsyncImage(
                         model = postState.images[0],
@@ -513,14 +467,13 @@ fun PostThumbnail(
                     }
                 }
                 Text(
-                    text = postState.title!!,
+                    text = postState.title,
                     fontSize = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.align(alignment = CenterVertically)
+                    modifier = Modifier.padding(5.dp).align(alignment = CenterVertically)
                 )
             }
-
         }
         Spacer(modifier = Modifier.height(5.dp))
     }

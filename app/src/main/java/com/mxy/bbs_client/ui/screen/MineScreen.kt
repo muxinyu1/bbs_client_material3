@@ -24,19 +24,21 @@ fun MineScreen(
     modifier: Modifier
 ) {
     val mineScreenState by mineScreenViewModel.mineScreenState.collectAsState()
+    val userInfoState = mineScreenState.userInfoState
     if (mineScreenState.login) {
         UserInfoCard(
             modifier = modifier,
-            userInfoViewModel = UserInfoViewModel(mineScreenState.username!!),
             mineScreenViewModel = mineScreenViewModel,
             visible = mineScreenState.login,
             homeScreenViewModel = homeScreenViewModel,
-            appViewModel = appViewModel
+            appViewModel = appViewModel,
+            //登录后userInfoState不可能是null
+            userInfoState = mineScreenState.userInfoState
         )
     }
     NotLoginCard(
         modifier = modifier,
-        userInfoViewModel = UserInfoViewModel(NotLogin),
+        userInfoState = userInfoState,
         mineScreenViewModel =  mineScreenViewModel,
         visible = !mineScreenState.login
     )

@@ -78,9 +78,6 @@ fun AddContent(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetMultipleContents(),
         ) {
-            for (uri in it) {
-                Log.d("获得uri", Gson().toJson(uri.path))
-            }
             imageList = imageList + it
         }
     Scaffold(
@@ -136,7 +133,7 @@ fun AddContent(
                         modifier = Modifier.padding(5.dp),
                         titleValue = title,
                         onValueChange = {
-                            titleIsEmpty = it.isEmpty()
+                            titleIsEmpty = it.isBlank()
                             title = it
                         },
                         titleIsEmpty = titleIsEmpty
@@ -149,7 +146,7 @@ fun AddContent(
                     modifier = Modifier.padding(5.dp),
                     value = content,
                     onValueChange = {
-                        contentIsEmpty = it.isEmpty()
+                        contentIsEmpty = it.isBlank()
                         content = it
                     },
                     isError = contentIsEmpty,

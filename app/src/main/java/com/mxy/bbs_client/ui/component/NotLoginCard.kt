@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mxy.bbs_client.entity.user.User
+import com.mxy.bbs_client.program.state.UserInfoState
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.UserInfoViewModel
 import com.mxy.bbs_client.utility.Client
@@ -36,109 +37,15 @@ private const val Password = "密码"
 private const val ConfirmPassword = "确认密码"
 private const val UsernameEmptyError = "用户名不能为空"
 private const val PasswordEmptyError = "密码不能为空"
-private const val UsernameAlreadyExistError = "用户名已存在"
-private const val WrongPasswordError = "用户名或密码不正确"
 private const val ConfirmPasswordError = "两次输入的密码不一致"
-private const val SignUpSuccess = "注册成功"
-private const val LoginSuccess = "登录成功"
-
-private fun signUp(
-    mineScreenViewModel: MineScreenViewModel,
-    username: String,
-    password: String,
-    confirmPassword: String,
-    context: Context
-) {
-    if (username.isEmpty()) {
-        Toast.makeText(context, UsernameEmptyError, Toast.LENGTH_SHORT).show()
-        return
-    }
-    if (password != confirmPassword) {
-        Toast.makeText(context, ConfirmPasswordError, Toast.LENGTH_SHORT).show()
-        return
-    }
-    if (password.isEmpty()) {
-        Toast.makeText(context, PasswordEmptyError, Toast.LENGTH_SHORT).show()
-    }
-    with(Utility.IOCoroutineScope) {
-        launch {
-            val userResponse = Client.addUser(User(username, password))
-            if (!userResponse.success!!) {
-                //用户名已存在
-                with(Utility.UICoroutineScope) {
-                    launch {
-                        Toast.makeText(context, UsernameAlreadyExistError, Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } else {
-                //注册成功
-                with(Utility.UICoroutineScope) {
-                    launch {
-                        Toast.makeText(context, SignUpSuccess, Toast.LENGTH_SHORT).show()
-                    }
-                }
-                //自动登录
-                mineScreenViewModel.loginSuccessfully(username)
-            }
-        }
-    }
-}
-
-
-private fun login(
-    mineScreenViewModel: MineScreenViewModel,
-    username: String,
-    password: String,
-    context: Context
-) {
-    if (username.isEmpty()) {
-        Toast.makeText(context, UsernameEmptyError, Toast.LENGTH_SHORT).show()
-        return
-    }
-    if (password.isEmpty()) {
-        Toast.makeText(context, PasswordEmptyError, Toast.LENGTH_SHORT).show()
-        return
-    }
-    with(Utility.IOCoroutineScope) {
-        launch {
-            val userResponse = Client.getUser(username)
-            if (!userResponse.success!!) {
-                //用户名不存在
-                with(Utility.UICoroutineScope) {
-                    launch {
-                        Toast.makeText(context, WrongPasswordError, Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } else {
-                if (userResponse.user!!.password!! != password) {
-                    //密码不正确
-                    with(Utility.UICoroutineScope) {
-                        launch {
-                            Toast.makeText(context, WrongPasswordError, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                } else {
-                    //密码正确
-                    with(Utility.UICoroutineScope) {
-                        launch {
-                            Toast.makeText(context, LoginSuccess, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    mineScreenViewModel.loginSuccessfully(username)
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun NotLoginCard(
     modifier: Modifier,
-    userInfoViewModel: UserInfoViewModel,
+    userInfoState: UserInfoState,
     mineScreenViewModel: MineScreenViewModel,
     visible: Boolean
 ) {
-    val userInfoState by userInfoViewModel.userInfoState.collectAsState()
     val density = LocalDensity.current
     AnimatedVisibility(
         visible = visible,
@@ -154,9 +61,9 @@ fun NotLoginCard(
         Column(modifier = modifier) {
             //未登录用户头像和昵称
             UserAvatarNicknameAndSign(
-                avatarUrl = userInfoState.avatarUrl!!,
-                nickname = userInfoState.nickname!!,
-                personalSign = userInfoState.personalSign!!,
+                avatarUrl = userInfoState.avatarUrl,
+                nickname = userInfoState.nickname,
+                personalSign = userInfoState.personalSign,
                 modifier = Modifier.padding(10.dp)
             )
             //登录
@@ -194,9 +101,14 @@ private fun SignUp(modifier: Modifier, mineScreenViewModel: MineScreenViewModel)
     var confirmPassword by remember {
         mutableStateOf("")
     }
+    var showError by remember {
+        mutableStateOf(false)
+    }
     val context = LocalContext.current
     Column(modifier = modifier.padding(10.dp)) {
-        EnterText(placeholder = Username,
+        EnterText(
+            placeholder = Username,
+            isError = if (showError) username.isBlank() else false,
             modifier = Modifier
                 .padding(5.dp)
                 .align(alignment = Alignment.CenterHorizontally),
@@ -204,9 +116,14 @@ private fun SignUp(modifier: Modifier, mineScreenViewModel: MineScreenViewModel)
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Ascii),
             onValueChange = {
                 username = it
-            })
+            },
+            supportingText = {
+                if (showError) AnimatedText(visible = username.isBlank(), text = UsernameEmptyError)
+            }
+        )
         EnterText(
             visualTransformation = PasswordVisualTransformation(),
+            isError = if (showError) password.isBlank() else false,
             placeholder = Password,
             modifier = Modifier
                 .padding(5.dp)
@@ -215,10 +132,15 @@ private fun SignUp(modifier: Modifier, mineScreenViewModel: MineScreenViewModel)
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
             onValueChange = {
                 password = it
-            })
+            },
+            supportingText = {
+                if (showError) AnimatedText(visible = password.isBlank(), text = PasswordEmptyError)
+            }
+        )
         EnterText(
             placeholder = ConfirmPassword,
             visualTransformation = PasswordVisualTransformation(),
+            isError = if (showError) password != confirmPassword else false,
             modifier = Modifier
                 .padding(5.dp)
                 .align(alignment = Alignment.CenterHorizontally),
@@ -226,13 +148,24 @@ private fun SignUp(modifier: Modifier, mineScreenViewModel: MineScreenViewModel)
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
             onValueChange = {
                 confirmPassword = it
-            })
+            },
+            supportingText = {
+                if (showError) AnimatedText(
+                    visible = password != confirmPassword,
+                    text = ConfirmPasswordError
+                )
+            }
+        )
         Button(
             modifier = Modifier
                 .align(alignment = Alignment.CenterHorizontally)
                 .padding(5.dp),
             onClick = {
-                signUp(mineScreenViewModel, username, password, confirmPassword, context)
+                if (!(username.isNotBlank() && password == confirmPassword && password.isNotBlank())) {
+                    showError = true
+                } else {
+                    mineScreenViewModel.signUp(username, password, context)
+                }
             },
             shape = RoundedCornerShape(10.dp),
         ) {
@@ -254,9 +187,14 @@ fun Login(modifier: Modifier, mineScreenViewModel: MineScreenViewModel) {
     var password by remember {
         mutableStateOf("")
     }
+    var showError by remember {
+        mutableStateOf(false)
+    }
     val context = LocalContext.current
     Column(modifier = modifier) {
-        EnterText(placeholder = Username,
+        EnterText(
+            isError = if (showError) username.isBlank() else false,
+            placeholder = Username,
             modifier = Modifier
                 .padding(5.dp)
                 .align(alignment = Alignment.CenterHorizontally),
@@ -264,8 +202,13 @@ fun Login(modifier: Modifier, mineScreenViewModel: MineScreenViewModel) {
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Ascii),
             onValueChange = {
                 username = it
-            })
+            },
+            supportingText = {
+                if (showError) AnimatedText(visible = username.isBlank(), text = UsernameEmptyError)
+            }
+        )
         EnterText(
+            isError = if (showError) password.isBlank() else false,
             placeholder = Password,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
@@ -275,13 +218,25 @@ fun Login(modifier: Modifier, mineScreenViewModel: MineScreenViewModel) {
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
             onValueChange = {
                 password = it
-            })
+            },
+            supportingText = {
+                if (showError) AnimatedText(visible = password.isBlank(), text = PasswordEmptyError)
+            }
+        )
         Button(
             modifier = Modifier
                 .align(alignment = Alignment.CenterHorizontally)
                 .padding(5.dp),
             onClick = {
-                login(mineScreenViewModel, username, password, context)
+                if (username.isNotBlank() && password.isNotBlank()) {
+                    mineScreenViewModel.login(
+                        username = username,
+                        password = password,
+                        context = context
+                    )
+                } else {
+                    showError = true
+                }
             },
             shape = RoundedCornerShape(10.dp),
         ) {

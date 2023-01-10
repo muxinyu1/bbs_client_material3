@@ -1,8 +1,8 @@
 package com.mxy.bbs_client.program.converter
 
-import android.annotation.SuppressLint
 import androidx.room.TypeConverter
 import com.google.gson.Gson
+import com.mxy.bbs_client.program.state.UserInfoState
 
 class Converter {
 
@@ -34,7 +34,17 @@ class Converter {
     }
 
     @TypeConverter
-    fun fromAnyToString(any: Any): String? {
+    fun fromAnyToStr(any: Any): String? {
         return gson.toJson(any)
+    }
+
+    @TypeConverter
+    fun fromUserInfoStateToStr(userInfoState: UserInfoState): String {
+        return gson.toJson(userInfoState)
+    }
+
+    @TypeConverter
+    fun fromStrToUserInfoState(str: String): UserInfoState {
+        return gson.fromJson(str, UserInfoState::class.java)
     }
 }
