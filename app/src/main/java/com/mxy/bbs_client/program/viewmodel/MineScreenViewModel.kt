@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterialApi::class)
+
 package com.mxy.bbs_client.program.viewmodel
 
 import android.app.Application
@@ -5,6 +7,9 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
@@ -15,7 +20,6 @@ import com.mxy.bbs_client.program.repository.MineScreenStateRepository
 import com.mxy.bbs_client.program.state.DefaultUserInfoState
 import com.mxy.bbs_client.program.state.MineScreenState
 import com.mxy.bbs_client.program.state.UserInfoState
-import com.mxy.bbs_client.ui.component.*
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +69,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         Room.databaseBuilder(
             context = app,
             klass = MineScreenStateDataBase::class.java,
-            name = "data.db"
+            name = "login_data.db"
         ).fallbackToDestructiveMigration().build()
     }
 
@@ -90,8 +94,19 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-
     private lateinit var _mineScreenState: MutableStateFlow<MineScreenState>
+
+    private val _bottomSheetState = MutableStateFlow(false)
+
+    val bottomSheetState = _bottomSheetState.asStateFlow()
+
+    fun openBottomSheet() {
+        _bottomSheetState.value = true
+    }
+
+    private fun closeBottomSheet()  {
+        _bottomSheetState.value = false
+    }
 
     lateinit var mineScreenState: StateFlow<MineScreenState>
 
@@ -190,6 +205,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         with(Utility.IOCoroutineScope) {
             launch {
                 mineScreenStateRepository.update(logout)
+                Client.deleteUserInfo(_mineScreenState.value.userInfoState.username)
             }
         }
     }
@@ -277,7 +293,8 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                             Toast.makeText(context, PostSuccess, Toast.LENGTH_SHORT).show()
                         }
                     }
-                    refresh(_mineScreenState.value.userInfoState!!.username)
+                    refresh(_mineScreenState.value.userInfoState.username)
+                    closeBottomSheet()
                 }
             }
         }
@@ -304,8 +321,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                 val reviewResponse = Client.addReview(
                     Utility.getRandomString(),
                     targetPost,
-                    //已经登录后username不可能是null
-                    _mineScreenState.value.userInfoState!!.username,
+                    _mineScreenState.value.userInfoState.username,
                     content,
                     imageList
                 )
@@ -323,6 +339,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                             Toast.makeText(context, ReviewSuccess, Toast.LENGTH_SHORT).show()
                         }
                         homeScreenViewModel.refreshPost()
+                        closeBottomSheet()
                     }
                 }
             }

@@ -73,6 +73,9 @@ fun AddContent(
     var imageList by remember {
         mutableStateOf(listOf<Uri>())
     }
+    var showError by remember {
+        mutableStateOf(false)
+    }
     val context = LocalContext.current
     val imagesPickerLauncher =
         rememberLauncherForActivityResult(
@@ -87,6 +90,11 @@ fun AddContent(
                     imagesPickerLauncher.launch(SelectImages)
                 },
                 onSendClick = {
+                    val hasError = if (isPost) (titleIsEmpty || contentIsEmpty) else contentIsEmpty
+                    if (hasError) {
+                        showError = true
+                        return@PictureEmojiAndSend
+                    }
                     if (isPost) {
                         mineScreenViewModel.sendPost(
                             title = title,
@@ -104,8 +112,7 @@ fun AddContent(
                             homeScreenViewModel = homeScreenViewModel
                         )
                     }
-                },
-                titleOrContentIsEmpty = if (isPost) (titleIsEmpty || contentIsEmpty) else contentIsEmpty
+                }
             )
         },
         content = {
@@ -136,7 +143,8 @@ fun AddContent(
                             titleIsEmpty = it.isBlank()
                             title = it
                         },
-                        titleIsEmpty = titleIsEmpty
+                        titleIsEmpty = if (showError) titleIsEmpty else false,
+                        showError = showError
                     )
                     Divider()
                 }
@@ -149,9 +157,11 @@ fun AddContent(
                         contentIsEmpty = it.isBlank()
                         content = it
                     },
-                    isError = contentIsEmpty,
+                    isError = if (showError) contentIsEmpty else false,
                     supportingText = {
-                        if (contentIsEmpty) Text(text = ContentEmptyError)
+                        if (showError) {
+                            AnimatedText(visible = contentIsEmpty, text = ContentEmptyError)
+                        }
                     },
                     singleLine = false
                 )
@@ -235,6 +245,7 @@ private fun EnterTitle(
     titleValue: String,
     onValueChange: (String) -> Unit,
     titleIsEmpty: Boolean,
+    showError: Boolean,
 ) =
     EnterText(
         placeholder = EnterTitle,
@@ -243,7 +254,9 @@ private fun EnterTitle(
         onValueChange = onValueChange,
         isError = titleIsEmpty,
         supportingText = {
-            if (titleIsEmpty) Text(text = TitleEmptyError)
+            if (showError) {
+                AnimatedText(visible = titleIsEmpty, text = TitleEmptyError)
+            }
         },
         textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp)
     )
@@ -253,7 +266,6 @@ private fun EnterTitle(
 private fun PictureEmojiAndSend(
     onSelectImgClick: () -> Unit,
     onSendClick: () -> Unit,
-    titleOrContentIsEmpty: Boolean,
 ) {
     BottomAppBar(
         actions = {
@@ -273,17 +285,11 @@ private fun PictureEmojiAndSend(
             }
         },
         floatingActionButton = {
-            if (!titleOrContentIsEmpty) {
-                FloatingActionButton(
-                    onClick = { onSendClick() },
-                    elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
-                ) {
-                    Icon(Icons.Filled.Send, "Send Content")
-                }
-            } else {
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(Icons.Filled.Send, "Send Content")
-                }
+            FloatingActionButton(
+                onClick = { onSendClick() },
+                elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
+            ) {
+                Icon(Icons.Filled.Send, "Send Content")
             }
         },
         modifier = Modifier

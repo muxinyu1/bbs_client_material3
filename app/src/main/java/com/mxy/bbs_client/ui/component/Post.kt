@@ -37,6 +37,7 @@ import com.mxy.bbs_client.program.state.ReviewState
 import com.mxy.bbs_client.serverinfo.DefaultAvatarUrl
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
+import com.mxy.bbs_client.utility.rememberForeverLazyListState
 import kotlinx.coroutines.launch
 
 private val onPostLikeClick: (String?) -> Unit = {
@@ -65,6 +66,7 @@ const val AlreadyBottom = "到底了~~"
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun Post(
+    postId: String,
     avatarUrl: Any,
     postOwner: String,
     nickname: String,
@@ -80,7 +82,11 @@ private fun Post(
     val iLikeState = remember { mutableStateOf(iLike) }
     val likeNumState = remember { mutableStateOf(likeNum) }
     likeNumState.value = likeNum
-    LazyColumn(modifier = modifier) {
+    val listState = rememberForeverLazyListState(key = postId)
+    LazyColumn(
+        modifier = modifier,
+        state = listState
+    ) {
         item {
             Column {
                 UserAndDate(avatarUrl = avatarUrl, username = nickname, date = date)
@@ -123,7 +129,7 @@ private fun Post(
                             if (!iLikeState.value) {
                                 iLikeState.value = true
                                 likeNumState.value++
-                                //点赞
+                                //TODO:点赞
                             }
                         },
                         modifier = Modifier.align(alignment = CenterHorizontally)
@@ -159,6 +165,7 @@ private fun Post(
 @Composable
 fun Post(modifier: Modifier, postState: PostState) {
     Post(
+        postId = postState.postId,
         avatarUrl = postState.avatarUrl,
         postOwner = postState.owner,
         nickname = postState.nickname,

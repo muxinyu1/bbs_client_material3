@@ -2,11 +2,11 @@ package com.mxy.bbs_client.ui.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
@@ -16,6 +16,7 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.mxy.bbs_client.program.state.PostState
 import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
+import com.mxy.bbs_client.utility.rememberForeverLazyListState
 
 private val PostCardPadding = PaddingValues(5.dp)
 
@@ -39,6 +40,10 @@ private fun PostList(
 ) {
     val isRefreshing by homeScreenViewModel.isRefreshing.collectAsState()
     val isLoading by homeScreenViewModel.isLoading.collectAsState()
+    val listState = rememberForeverLazyListState(key = "Home")
+    listState.OnBottomReached(2) {
+        homeScreenViewModel.loadMore()
+    }
     SwipeRefresh(
         state = rememberSwipeRefreshState(isRefreshing = isRefreshing),
         modifier = modifier,
@@ -46,7 +51,7 @@ private fun PostList(
     )
     {
         if (lazyLoad) {
-            LazyColumn {
+            LazyColumn(state = listState) {
                 items(postStates.size) { i: Int ->
                     PostCard(
                         postState = postStates[i],
@@ -56,7 +61,6 @@ private fun PostList(
                         homeScreenViewModel = homeScreenViewModel
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-
                 }
             }
         } else {
@@ -76,6 +80,28 @@ private fun PostList(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun LazyListState.OnBottomReached(
+    buffer : Int = 0,
+    loadMore : () -> Unit
+) {
+    require(buffer >= 0) { "${buffer}必须是正数" }
+
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
+                ?:
+                return@derivedStateOf true
+            lastVisibleItem.index >=  layoutInfo.totalItemsCount - 1 - buffer
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore){
+        snapshotFlow { shouldLoadMore.value }
+            .collect { if (it) loadMore() }
     }
 }
 

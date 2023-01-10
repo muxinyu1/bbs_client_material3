@@ -36,9 +36,11 @@ fun App(
     val appState by appViewModel.appState.collectAsState()
     val homeScreenState by homeScreenViewModel.homeScreenState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val bottomSheetIsOpen by mineScreenViewModel.bottomSheetState.collectAsState()
     val sheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
-        confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded })
+        confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded}
+    )
     ModalBottomSheetLayout(
         sheetShape = RoundedCornerShape(20.dp),
         sheetContent = {
@@ -66,10 +68,20 @@ fun App(
                     )
                 }
             } else {
-                Text(text = "空sheet")
+                Text(text = "")
             }
         },
-        sheetState = sheetState
+        sheetState = if (bottomSheetIsOpen) sheetState.apply {
+            coroutineScope.launch {
+                sheetState.show()
+            }
+        } else {
+            sheetState.apply {
+                coroutineScope.launch {
+                    sheetState.hide()
+                }
+            }
+        }
     ) {
         Scaffold(
             topBar = {
@@ -85,9 +97,7 @@ fun App(
                     exit = slideOutHorizontally { (3 * it) / 2 }
                 ) {
                     FloatingActionButton(onClick = {
-                        coroutineScope.launch {
-                            sheetState.show()
-                        }
+                        mineScreenViewModel.openBottomSheet()
                     }) {
                         Icon(FeatherIcons.Plus, contentDescription = "Refresh")
                     }
