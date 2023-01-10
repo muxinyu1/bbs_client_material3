@@ -99,7 +99,6 @@ class HomeScreenViewModel : ViewModel() {
 
     fun refreshPost() = with(Utility.IOCoroutineScope) {
         launch {
-            //TODO:刷新帖子
             if (_homeScreenState.value.openedPost == null) {
                 return@launch
             }
