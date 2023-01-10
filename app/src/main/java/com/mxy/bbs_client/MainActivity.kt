@@ -3,21 +3,25 @@ package com.mxy.bbs_client
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
+import android.view.Window
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.material3.*
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
-import coil.imageLoader
 import coil.memory.MemoryCache
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.factory.ViewModelFactory
 import com.mxy.bbs_client.ui.screen.App
 import com.mxy.bbs_client.ui.theme.Bbs_clientTheme
-import com.mxy.bbs_client.utility.Client
+
 
 class MainActivity : ComponentActivity(), ImageLoaderFactory {
 
@@ -34,6 +38,10 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val windowInsetsController = WindowInsetsControllerCompat(
+            window, window.decorView
+        )
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
         // Client.createCacheDatabase(application)
         setContent {
             Bbs_clientTheme {
@@ -46,6 +54,14 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
         super.onDestroy()
         mineScreenViewModel.closeDatabase()
         // Client.closeDatabase()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val windowInsetsController = WindowInsetsControllerCompat(
+            window, window.decorView
+        )
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
     }
 
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
