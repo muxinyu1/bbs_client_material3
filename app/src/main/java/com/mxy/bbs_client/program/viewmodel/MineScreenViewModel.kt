@@ -205,7 +205,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         with(Utility.IOCoroutineScope) {
             launch {
                 mineScreenStateRepository.update(logout)
-                Client.deleteUserInfo(_mineScreenState.value.userInfoState.username)
+                // Client.deleteUserInfo(_mineScreenState.value.userInfoState.username)
             }
         }
     }

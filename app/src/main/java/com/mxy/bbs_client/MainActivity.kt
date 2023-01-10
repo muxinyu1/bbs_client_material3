@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Client.createCacheDatabase(application)
+        // Client.createCacheDatabase(application)
         setContent {
             Bbs_clientTheme {
                 App(mineScreenViewModel = mineScreenViewModel)
@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
     override fun onDestroy() {
         super.onDestroy()
         mineScreenViewModel.closeDatabase()
-        Client.closeDatabase()
+        // Client.closeDatabase()
     }
 
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)

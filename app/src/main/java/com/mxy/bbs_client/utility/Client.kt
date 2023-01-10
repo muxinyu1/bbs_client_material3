@@ -40,19 +40,19 @@ object Client {
             .build()
     }
 
-    private lateinit var cacheDatabase: CacheDatabase
+//    private lateinit var cacheDatabase: CacheDatabase
 
-    private lateinit var cacheRepository: CacheRepository
+//    private lateinit var cacheRepository: CacheRepository
 
-    fun createCacheDatabase(app: Application) {
-        cacheDatabase = Room.databaseBuilder(app, CacheDatabase::class.java, "cache_data.db")
-            .fallbackToDestructiveMigration().build()
-        cacheRepository = CacheRepository(cacheDatabase)
-    }
+//    fun createCacheDatabase(app: Application) {
+//        cacheDatabase = Room.databaseBuilder(app, CacheDatabase::class.java, "cache_data.db")
+//            .fallbackToDestructiveMigration().build()
+//        cacheRepository = CacheRepository(cacheDatabase)
+//    }
 
-    fun closeDatabase() {
-        cacheRepository.closeDatabase()
-    }
+//    fun closeDatabase() {
+//        cacheRepository.closeDatabase()
+//    }
 
     private val gson by lazy {
         Gson()
@@ -62,24 +62,24 @@ object Client {
         if (username == null) {
             return UserResponse(false, UserResponseFailedReason.USERNAME_DOES_NOT_EXIST, null)
         }
-        val localUser = cacheRepository.getUser(username)
-        if (localUser != null) {
-            Log.d("缓存", "本地存在${gson.toJson(localUser)}")
-            return UserResponse(true, null, localUser)
-        }
+//        val localUser = cacheRepository.getUser(username)
+//        if (localUser != null) {
+//            Log.d("缓存", "本地存在${gson.toJson(localUser)}")
+//            return UserResponse(true, null, localUser)
+//        }
         val requestBody =
             gson.toJson(User(username, null)).toRequestBody(jsonMediaType.toMediaType())
         val request = Request.Builder().url("$serverUrl/user/query").post(requestBody).build()
         val userResponse = client.newCall(request).execute()
         val remoteUserResponse =
             gson.fromJson(userResponse.body?.string(), UserResponse::class.java)
-        if (remoteUserResponse.success!!) {
-            try {
-                cacheRepository.addUser(remoteUserResponse.user!!)
-            } catch (e: Exception) {
-                Log.d("Client", "被捕获的异常: $e")
-            }
-        }
+//        if (remoteUserResponse.success!!) {
+//            try {
+//                cacheRepository.addUser(remoteUserResponse.user!!)
+//            } catch (e: Exception) {
+//                Log.d("Client", "被捕获的异常: $e")
+//            }
+//        }
         return remoteUserResponse
     }
 
@@ -93,11 +93,11 @@ object Client {
         if (postId == null) {
             return PostResponse(false, PostResponseFailedReason.POST_DOES_NOT_EXIST, null)
         }
-        val localPost = cacheRepository.getPost(postId)
-        if (localPost != null) {
-            Log.d("缓存", "本地存在${gson.toJson(localPost)}")
-            return PostResponse(true, null, localPost)
-        }
+//        val localPost = cacheRepository.getPost(postId)
+//        if (localPost != null) {
+//            Log.d("缓存", "本地存在${gson.toJson(localPost)}")
+//            return PostResponse(true, null, localPost)
+//        }
         val requestBody = "".toRequestBody(null)
         //这些form-data对应PostRequest数据类
         val multipartBody = MultipartBody.Builder().setType(MultipartBody.FORM)
@@ -110,13 +110,13 @@ object Client {
         val postResponse = client.newCall(request).execute()
         val remotePostResponse =
             gson.fromJson(postResponse.body?.string(), PostResponse::class.java)
-        if (remotePostResponse.success!!) {
-            try {
-                cacheRepository.addPost(remotePostResponse.post!!)
-            } catch (e: Exception) {
-                Log.d("Client", "被捕获的异常: $e")
-            }
-        }
+//        if (remotePostResponse.success!!) {
+//            try {
+//                cacheRepository.addPost(remotePostResponse.post!!)
+//            } catch (e: Exception) {
+//                Log.d("Client", "被捕获的异常: $e")
+//            }
+//        }
         return remotePostResponse
     }
 
@@ -124,11 +124,11 @@ object Client {
         if (username == null) {
             return UserInfoResponse(false, UserResponseFailedReason.USERNAME_DOES_NOT_EXIST, null)
         }
-        val localUserInfo = cacheRepository.getUserInfo(username)
-        if (localUserInfo != null) {
-            Log.d("缓存", "本地存在${gson.toJson(localUserInfo)}")
-            return UserInfoResponse(true, null, localUserInfo)
-        }
+//        val localUserInfo = cacheRepository.getUserInfo(username)
+//        if (localUserInfo != null) {
+//            Log.d("缓存", "本地存在${gson.toJson(localUserInfo)}")
+//            return UserInfoResponse(true, null, localUserInfo)
+//        }
         val requestBody = "".toRequestBody(null)
         val multipartBody = MultipartBody.Builder().setType(MultipartBody.FORM)
             .addFormDataPart("username", username)
@@ -140,13 +140,13 @@ object Client {
         val userInfoResponse = client.newCall(request).execute()
         val remoteUserInfoResponse =
             gson.fromJson(userInfoResponse.body?.string(), UserInfoResponse::class.java)
-        if (remoteUserInfoResponse.success!!) {
-            try {
-                cacheRepository.addUserInfo(remoteUserInfoResponse.userInfo!!)
-            } catch (e: Exception) {
-                Log.d("Client", "被捕获的异常: $e")
-            }
-        }
+//        if (remoteUserInfoResponse.success!!) {
+//            try {
+//                cacheRepository.addUserInfo(remoteUserInfoResponse.userInfo!!)
+//            } catch (e: Exception) {
+//                Log.d("Client", "被捕获的异常: $e")
+//            }
+//        }
         return remoteUserInfoResponse
     }
 
@@ -155,11 +155,11 @@ object Client {
             return ReviewResponse(false, ReviewResponseFailedReason.REVIEW_DOES_NOT_EXISTS, null)
         }
         Log.d("Client-Review", "要查询的ReviewId = $reviewId")
-        val localReview = cacheRepository.getReview(reviewId)
-        if (localReview != null) {
-            Log.d("Client-Review", "从本地加载了Review${gson.toJson(localReview)}")
-            return ReviewResponse(true, null, localReview)
-        }
+//        val localReview = cacheRepository.getReview(reviewId)
+//        if (localReview != null) {
+//            Log.d("Client-Review", "从本地加载了Review${gson.toJson(localReview)}")
+//            return ReviewResponse(true, null, localReview)
+//        }
         val requestBody = "".toRequestBody(null)
         val multipartBody = MultipartBody.Builder().setType(MultipartBody.FORM)
             .addFormDataPart("id", reviewId)
@@ -172,13 +172,13 @@ object Client {
         val reviewResponse = client.newCall(request).execute()
         val remoteReviewResponse =
             gson.fromJson(reviewResponse.body?.string(), ReviewResponse::class.java)
-        if (remoteReviewResponse.success!!) {
-            try {
-                cacheRepository.addReview(remoteReviewResponse.review!!)
-            } catch (e: Exception) {
-                Log.d("Client", "被捕获的异常: $e")
-            }
-        }
+//        if (remoteReviewResponse.success!!) {
+//            try {
+//                cacheRepository.addReview(remoteReviewResponse.review!!)
+//            } catch (e: Exception) {
+//                Log.d("Client", "被捕获的异常: $e")
+//            }
+//        }
         return remoteReviewResponse
     }
 
@@ -188,13 +188,13 @@ object Client {
         val userResponse = client.newCall(request).execute()
         val remoteUserResponse =
             gson.fromJson(userResponse.body?.string(), UserResponse::class.java)
-        if (remoteUserResponse.success!!) {
-            try {
-                cacheRepository.addUser(user)
-            } catch (e: Exception) {
-                Log.d("Client", "被捕获的异常: $e")
-            }
-        }
+//        if (remoteUserResponse.success!!) {
+//            try {
+//                cacheRepository.addUser(user)
+//            } catch (e: Exception) {
+//                Log.d("Client", "被捕获的异常: $e")
+//            }
+//        }
         return remoteUserResponse
     }
 
@@ -216,28 +216,28 @@ object Client {
         val userInfoResponse = client.newCall(request).execute()
         val remoteUserInfoResponse =
             gson.fromJson(userInfoResponse.body?.string(), UserInfoResponse::class.java)
-        if (remoteUserInfoResponse.success!!) {
-            try {
-                cacheRepository.deleteUserInfo(
-                    UserInfo(
-                        username,
-                        nickname,
-                        personalSign,
-                        null,
-                        listOf(),
-                        listOf()
-                    )
-                )
-            } catch (e: Exception) {
-                Log.d("Client", "被捕获的异常: $e")
-            }
-        }
+//        if (remoteUserInfoResponse.success!!) {
+//            try {
+//                cacheRepository.deleteUserInfo(
+//                    UserInfo(
+//                        username,
+//                        nickname,
+//                        personalSign,
+//                        null,
+//                        listOf(),
+//                        listOf()
+//                    )
+//                )
+//            } catch (e: Exception) {
+//                Log.d("Client", "被捕获的异常: $e")
+//            }
+//        }
         return remoteUserInfoResponse
     }
 
-    fun deleteUserInfo(username: String) {
-        cacheRepository.deleteUserInfo(UserInfo(username, null, null, null, listOf(), listOf()))
-    }
+//    fun deleteUserInfo(username: String) {
+//        cacheRepository.deleteUserInfo(UserInfo(username, null, null, null, listOf(), listOf()))
+//    }
 
     fun addReview(
         id: String,
@@ -263,13 +263,13 @@ object Client {
         val reviewResponse = client.newCall(request).execute()
         val remoteReviewResponse =
             gson.fromJson(reviewResponse.body?.string(), ReviewResponse::class.java)
-        if (remoteReviewResponse.success!!) {
-            try {
-                cacheRepository.deletePost(Post(targetPost, "", "", "", "", listOf(), 0, listOf()))
-            } catch (e: Exception) {
-                Log.d("Client", "被捕获的异常: $e")
-            }
-        }
+//        if (remoteReviewResponse.success!!) {
+//            try {
+//                cacheRepository.deletePost(Post(targetPost, "", "", "", "", listOf(), 0, listOf()))
+//            } catch (e: Exception) {
+//                Log.d("Client", "被捕获的异常: $e")
+//            }
+//        }
         return remoteReviewResponse
     }
 
@@ -297,13 +297,13 @@ object Client {
         val postResponse = client.newCall(request).execute()
         val remotePostResponse =
             gson.fromJson(postResponse.body?.string(), PostResponse::class.java)
-        if (remotePostResponse.success!!) {
-            try {
-                cacheRepository.deleteUserInfo(UserInfo(owner, "", "", null, listOf(), listOf()))
-            } catch (e: Exception) {
-                Log.d("Client", "被捕获的异常: $e")
-            }
-        }
+//        if (remotePostResponse.success!!) {
+//            try {
+//                cacheRepository.deleteUserInfo(UserInfo(owner, "", "", null, listOf(), listOf()))
+//            } catch (e: Exception) {
+//                Log.d("Client", "被捕获的异常: $e")
+//            }
+//        }
         return remotePostResponse
     }
 
