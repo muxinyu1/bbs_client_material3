@@ -1,5 +1,6 @@
 package com.mxy.bbs_client.program.converter
 
+import android.util.Log
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.mxy.bbs_client.program.state.UserInfoState
@@ -11,13 +12,14 @@ class Converter {
     }
 
     @TypeConverter
-    fun fromListToStr(list: List<Any>): String? {
+    fun fromListToStr(list: List<Any>): String {
         return gson.toJson(list)
     }
 
     @TypeConverter
     @Suppress("UNCHECKED_CAST")
     fun fromStrToList(string: String): List<Any> {
+        Log.d("fromStrToList", "str = $string")
         val lst = gson.fromJson(string, List::class.java)
         return lst as List<Any>
     }
@@ -34,8 +36,13 @@ class Converter {
     }
 
     @TypeConverter
-    fun fromAnyToStr(any: Any): String? {
-        return gson.toJson(any)
+    fun fromAnyToStr(any: Any): String {
+        return any.toString()
+    }
+
+    @TypeConverter
+    fun fromStrToAny(str: String): Any {
+        return str
     }
 
     @TypeConverter
