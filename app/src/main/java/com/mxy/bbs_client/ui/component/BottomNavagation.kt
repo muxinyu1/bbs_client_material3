@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import com.mxy.bbs_client.program.state.AppState
 import com.mxy.bbs_client.program.viewmodel.AppViewModel
 import compose.icons.FeatherIcons

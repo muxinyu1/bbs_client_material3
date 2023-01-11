@@ -1,16 +1,16 @@
 package com.mxy.bbs_client
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.view.Window
-import android.view.WindowManager
+import android.os.VibratorManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.material3.*
-import androidx.core.view.WindowCompat
+import androidx.compose.ui.Modifier
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import coil.ImageLoader
@@ -19,10 +19,13 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.factory.ViewModelFactory
+import com.mxy.bbs_client.ui.component.SavableAsyncImage
+import com.mxy.bbs_client.ui.component.vibrator
 import com.mxy.bbs_client.ui.screen.App
 import com.mxy.bbs_client.ui.theme.Bbs_clientTheme
 
 
+@RequiresApi(Build.VERSION_CODES.S)
 class MainActivity : ComponentActivity(), ImageLoaderFactory {
 
     private val viewModelFactory by lazy {
@@ -33,19 +36,23 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
         viewModelFactory.create(MineScreenViewModel::class.java)
     }
 
+    private val vibratorManager by lazy {
+        getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+    }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val windowInsetsController = WindowInsetsControllerCompat(
-            window, window.decorView
-        )
-        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
         // Client.createCacheDatabase(application)
         setContent {
             Bbs_clientTheme {
                 App(mineScreenViewModel = mineScreenViewModel)
+//                SavableAsyncImage(
+//                    model = "http://nahida8848.xyz:8086/home/nginx_root/repo/server/avatars/default.png",
+//                    contentDescription = null,
+//                    modifier = Modifier
+//                )
             }
         }
     }
@@ -54,14 +61,6 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
         super.onDestroy()
         mineScreenViewModel.closeDatabase()
         // Client.closeDatabase()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val windowInsetsController = WindowInsetsControllerCompat(
-            window, window.decorView
-        )
-        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
     }
 
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
