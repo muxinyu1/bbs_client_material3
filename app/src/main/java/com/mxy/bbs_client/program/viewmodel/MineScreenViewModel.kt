@@ -8,8 +8,6 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
@@ -29,6 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.FilenameUtils
 import java.io.File
 import java.net.URL
 
@@ -45,7 +44,16 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         private const val SignUpSuccess = "注册成功"
         private const val ModifySuccess = "更改成功"
         private fun toFile(uri: Uri, context: Context): File {
-            val file = File.createTempFile(Utility.getRandomString(), null)
+            val filename = try {
+                Utility.getFileName(uri, context)
+            } catch (e: Exception) {
+                Utility.getRandomString()
+            }
+            Log.d("Exception", "文件全名是$filename")
+            val file = File.createTempFile(
+                FilenameUtils.getBaseName(filename),
+                ".${FilenameUtils.getExtension(filename)
+            }")
             val inputStream = context.contentResolver.openInputStream(uri)
             FileUtils.copyInputStreamToFile(inputStream, file)
             return file
@@ -275,7 +283,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                 val postResponse = Client.addPost(
                     Utility.getRandomString(),
                     //已经登录后username不可能是null
-                    _mineScreenState.value.userInfoState!!.username,
+                    _mineScreenState.value.userInfoState.username,
                     title,
                     content,
                     imageList

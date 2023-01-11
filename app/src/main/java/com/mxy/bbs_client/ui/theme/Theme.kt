@@ -11,14 +11,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
+private val DarkColorScheme = darkColorScheme()
 
-)
-
-private val LightColorScheme = lightColorScheme(
-
-
-)
+private val LightColorScheme = lightColorScheme()
 
 @Composable
 fun Bbs_clientTheme(

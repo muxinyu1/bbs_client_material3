@@ -1,6 +1,8 @@
 package com.mxy.bbs_client.ui.component
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -48,6 +50,7 @@ private val onReviewLikeClick: (String?) -> Unit = {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun Reply(
     avatarUrl: Any,
@@ -166,21 +169,15 @@ fun Reply(
                 //回复中的图片
                 for (imgUrl in imgUrls) {
                     Log.d("回复中的图片", imgUrl as String)
-                    SubcomposeAsyncImage(
-                        model = imgUrl, contentDescription = "reply img",
+                    SavableAsyncImage(
+                        model = imgUrl,
+                        contentDescription = "reply img",
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
                             .border(1.dp, Color.Gray, RoundedCornerShape(10.dp))
                             .fillMaxWidth(),
                         contentScale = ContentScale.Crop
-                    ) {
-                        val state = painter.state
-                        if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
-                            CircularProgressIndicator()
-                        } else {
-                            SubcomposeAsyncImageContent()
-                        }
-                    }
+                    )
                     Spacer(modifier = Modifier.height(5.dp))
                 }
                 Spacer(modifier = Modifier.height(10.dp))

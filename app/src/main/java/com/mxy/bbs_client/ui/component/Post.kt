@@ -3,7 +3,9 @@
 package com.mxy.bbs_client.ui.component
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,6 +65,7 @@ val DefaultUserInfo = UserInfo("加载中...", "加载中...", "", DefaultAvatar
 
 const val AlreadyBottom = "到底了~~"
 
+@RequiresApi(Build.VERSION_CODES.S)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun Post(
@@ -104,22 +107,15 @@ private fun Post(
                 )
                 //帖子图片
                 for (imgUrl in postImgUrls) {
-                    SubcomposeAsyncImage(
+                    SavableAsyncImage(
                         model = imgUrl,
                         contentDescription = null,
-                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
                             .border(2.dp, Color.Gray, RoundedCornerShape(10.dp))
                             .fillMaxWidth(),
-                    ) {
-                        val state = painter.state
-                        if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
-                            CircularProgressIndicator()
-                        } else {
-                            SubcomposeAsyncImageContent()
-                        }
-                    }
+                        contentScale = ContentScale.Crop
+                    )
                     Spacer(modifier = Modifier.height(20.dp))
                 }
                 //点赞图标
@@ -162,6 +158,7 @@ private fun Post(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun Post(modifier: Modifier, postState: PostState) {
     Post(

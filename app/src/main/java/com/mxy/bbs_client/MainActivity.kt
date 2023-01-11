@@ -5,6 +5,9 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.os.VibratorManager
+import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -44,15 +47,9 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Client.createCacheDatabase(application)
         setContent {
             Bbs_clientTheme {
                 App(mineScreenViewModel = mineScreenViewModel)
-//                SavableAsyncImage(
-//                    model = "http://nahida8848.xyz:8086/home/nginx_root/repo/server/avatars/default.png",
-//                    contentDescription = null,
-//                    modifier = Modifier
-//                )
             }
         }
     }

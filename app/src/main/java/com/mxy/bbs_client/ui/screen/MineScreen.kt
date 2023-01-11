@@ -13,8 +13,6 @@ import com.mxy.bbs_client.program.viewmodel.UserInfoViewModel
 import com.mxy.bbs_client.ui.component.NotLoginCard
 import com.mxy.bbs_client.ui.component.UserInfoCard
 
-private const val NotLogin = "未登录"
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MineScreen(

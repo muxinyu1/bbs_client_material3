@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -22,11 +21,8 @@ import com.mxy.bbs_client.program.viewmodel.AppViewModel
 import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 import compose.icons.FeatherIcons
 import compose.icons.LineAwesomeIcons
-import compose.icons.TablerIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.lineawesomeicons.Connectdevelop
-import compose.icons.lineawesomeicons.UsersSolid
-import compose.icons.tablericons.Social
 
 private const val HomeScreenText = "首页"
 
@@ -37,7 +33,8 @@ private const val MineScreenText = "我的"
 fun AppTopBar(
     index: Int,
     appViewModel: AppViewModel,
-    homeScreenViewModel: HomeScreenViewModel
+    homeScreenViewModel: HomeScreenViewModel,
+    scrollBehavior: TopAppBarScrollBehavior?
 ) {
     val appState by appViewModel.appState.collectAsState()
     val homeScreenState by homeScreenViewModel.homeScreenState.collectAsState()
@@ -127,6 +124,6 @@ fun AppTopBar(
                 }
             }
         },
-        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+        scrollBehavior = scrollBehavior
     )
 }

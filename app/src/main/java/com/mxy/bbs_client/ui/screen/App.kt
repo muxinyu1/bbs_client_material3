@@ -1,8 +1,12 @@
 package com.mxy.bbs_client.ui.screen
 
 import android.os.Build
+import android.os.CombinedVibration
+import android.os.VibrationEffect
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -13,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mxy.bbs_client.program.viewmodel.AppViewModel
@@ -21,7 +27,9 @@ import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.ui.component.AddContent
 import com.mxy.bbs_client.ui.component.AppTopBar
 import com.mxy.bbs_client.ui.component.BottomNavigation
+import com.mxy.bbs_client.ui.component.vibrator
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Heart
 import compose.icons.feathericons.Plus
 import kotlinx.coroutines.launch
 
@@ -39,9 +47,16 @@ fun App(
     val bottomSheetIsOpen by mineScreenViewModel.bottomSheetState.collectAsState()
     val sheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
-        confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded}
+        confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded }
     )
     ModalBottomSheetLayout(
+        modifier = Modifier.pointerInput(Unit) {
+            detectHorizontalDragGestures(
+                onHorizontalDrag = { change, dragAmount ->
+                    //TODO:水平滑动切换Screen
+                }
+            )
+        },
         sheetShape = RoundedCornerShape(20.dp),
         sheetContent = {
             if (appState.currentScreen == 0) {
@@ -83,9 +98,16 @@ fun App(
             }
         }
     ) {
+        val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
         Scaffold(
+            //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
-                AppTopBar(index = appState.currentScreen, appViewModel, homeScreenViewModel)
+                AppTopBar(
+                    index = appState.currentScreen,
+                    appViewModel,
+                    homeScreenViewModel,
+                    scrollBehavior = null
+                )
             },
             bottomBar = {
                 BottomNavigation(appState, appViewModel)
