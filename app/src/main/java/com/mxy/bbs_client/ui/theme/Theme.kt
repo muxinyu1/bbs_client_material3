@@ -42,9 +42,11 @@ fun Bbs_clientTheme(
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.surface.toArgb()
             window.navigationBarColor = colorScheme.surface.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
         }
     }
 
