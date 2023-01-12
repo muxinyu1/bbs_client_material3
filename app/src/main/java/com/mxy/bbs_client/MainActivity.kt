@@ -5,24 +5,18 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.os.VibratorManager
-import android.util.Log
-import android.view.GestureDetector
-import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.material3.*
-import androidx.compose.ui.Modifier
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.program.viewmodel.factory.ViewModelFactory
-import com.mxy.bbs_client.ui.component.SavableAsyncImage
 import com.mxy.bbs_client.ui.component.vibrator
 import com.mxy.bbs_client.ui.screen.App
 import com.mxy.bbs_client.ui.theme.Bbs_clientTheme
@@ -39,6 +33,10 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
         viewModelFactory.create(MineScreenViewModel::class.java)
     }
 
+    private val homeScreenViewModel by lazy {
+        viewModelFactory.create(HomeScreenViewModel::class.java)
+    }
+
     private val vibratorManager by lazy {
         getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
     }
@@ -47,9 +45,13 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        vibrator = vibratorManager
         setContent {
             Bbs_clientTheme {
-                App(mineScreenViewModel = mineScreenViewModel)
+                App(
+                    mineScreenViewModel = mineScreenViewModel,
+                    homeScreenViewModel = homeScreenViewModel
+                )
             }
         }
     }

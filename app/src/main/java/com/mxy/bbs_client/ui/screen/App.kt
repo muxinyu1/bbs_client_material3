@@ -1,12 +1,9 @@
 package com.mxy.bbs_client.ui.screen
 
 import android.os.Build
-import android.os.CombinedVibration
-import android.os.VibrationEffect
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -17,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -27,13 +23,11 @@ import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import com.mxy.bbs_client.ui.component.AddContent
 import com.mxy.bbs_client.ui.component.AppTopBar
 import com.mxy.bbs_client.ui.component.BottomNavigation
-import com.mxy.bbs_client.ui.component.vibrator
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Heart
 import compose.icons.feathericons.Plus
 import kotlinx.coroutines.launch
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(Build.VERSION_CODES.S)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun App(
@@ -98,7 +92,7 @@ fun App(
             }
         }
     ) {
-        val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+        //val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
         Scaffold(
             //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
@@ -132,7 +126,10 @@ fun App(
                 exit = slideOutHorizontally { -it },
                 modifier = Modifier.padding(paddingValues)
             ) {
-                HomeScreen(homeScreenViewModel)
+                HomeScreen(
+                    homeScreenViewModel = homeScreenViewModel,
+                    mineScreenViewModel = mineScreenViewModel
+                )
             }
             AnimatedVisibility(
                 visible = appState.currentScreen == 1,

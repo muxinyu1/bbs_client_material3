@@ -1,6 +1,8 @@
 package com.mxy.bbs_client.program.viewmodel
 
+import android.app.Application
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import com.mxy.bbs_client.program.state.HomeScreenState
 import com.mxy.bbs_client.program.state.PostState
@@ -12,7 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HomeScreenViewModel : ViewModel() {
+class HomeScreenViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         fun toPostStateList(postIds: List<String>): List<PostState> {
             val res = mutableListOf<PostState>()
@@ -34,7 +36,7 @@ class HomeScreenViewModel : ViewModel() {
                         likeNum = post.likeNum!!,
                         reviewNum = post.reviews.size,
                         nickname = userInfo.nickname!!,
-                        reviews = reviewStateList
+                        reviews = reviewStateList,
                     )
                 )
             }

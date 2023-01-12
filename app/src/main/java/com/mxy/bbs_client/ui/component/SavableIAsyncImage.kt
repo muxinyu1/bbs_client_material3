@@ -68,7 +68,7 @@ fun SavableAsyncImage(
                     vibrator?.vibrate(
                         CombinedVibration.createParallel(
                             VibrationEffect.startComposition()
-                                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_SPIN)
+                                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK)
                                 .compose()
                         )
                     )

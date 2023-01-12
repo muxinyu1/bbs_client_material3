@@ -11,7 +11,7 @@ val DefaultPostState = PostState(
     avatarUrl = "http://nahida8848.xyz:8086/home/nginx_root/repo/server/./avatars/default.png",
     nickname = "加载中",
     reviewNum = 0,
-    postId = "正在加载帖子"
+    postId = "正在加载帖子",
 )
 
 data class PostState(

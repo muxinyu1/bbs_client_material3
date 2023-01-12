@@ -313,4 +313,29 @@ object Client {
         val actionResponse = client.newCall(request).execute()
         return gson.fromJson(actionResponse.body?.string(), ActionResponse::class.java)
     }
+
+    private fun favor(username: String, targetPost: String, isCancelFavor: Boolean): ActionResponse {
+        val requestBody =
+            gson.toJson(
+                ActionRequest(true, targetPost, null, username)
+            ).toRequestBody(
+                jsonMediaType.toMediaType()
+            )
+        Log.d("Client", "post: ${gson.toJson(
+            ActionRequest(true, targetPost, "", username)
+        )}")
+        val request = Request.Builder()
+            .url("$serverUrl/action/" + if (isCancelFavor) "cancelFavor" else "favor")
+            .post(requestBody).build()
+        val actionResponse = client.newCall(request).execute()
+        return gson.fromJson(actionResponse.body?.string(), ActionResponse::class.java)
+    }
+
+    fun favor(username: String, targetPost: String): ActionResponse {
+        return favor(username, targetPost, false)
+    }
+
+    fun cancelFavor(username: String, targetPost: String): ActionResponse {
+        return favor(username, targetPost, true)
+    }
 }

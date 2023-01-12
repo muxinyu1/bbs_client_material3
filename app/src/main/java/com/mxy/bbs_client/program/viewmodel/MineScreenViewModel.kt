@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterialApi::class)
-
 package com.mxy.bbs_client.program.viewmodel
 
 import android.app.Application
@@ -17,6 +15,7 @@ import com.mxy.bbs_client.program.db.MineScreenStateDataBase
 import com.mxy.bbs_client.program.repository.MineScreenStateRepository
 import com.mxy.bbs_client.program.state.DefaultUserInfoState
 import com.mxy.bbs_client.program.state.MineScreenState
+import com.mxy.bbs_client.program.state.PostState
 import com.mxy.bbs_client.program.state.UserInfoState
 import com.mxy.bbs_client.utility.Client
 import com.mxy.bbs_client.utility.Utility
@@ -53,10 +52,16 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
             if (prefix.length < 3) {
                 prefix = "${prefix}___"
             }
-            val suffix =  FilenameUtils.getExtension(filename)
-            Log.d("Exception", "文件全名是 $filename, 前缀${FilenameUtils.getBaseName(filename)}:, 后缀: ${FilenameUtils.getExtension(filename)}")
+            val suffix = FilenameUtils.getExtension(filename)
+            Log.d(
+                "Exception",
+                "文件全名是 $filename, 前缀${FilenameUtils.getBaseName(filename)}:, 后缀: ${
+                    FilenameUtils.getExtension(filename)
+                }"
+            )
             val file = File.createTempFile(
-                prefix,suffix)
+                prefix, suffix
+            )
             val inputStream = context.contentResolver.openInputStream(uri)
             FileUtils.copyInputStreamToFile(inputStream, file)
             return file
@@ -115,7 +120,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         _bottomSheetState.value = listOf(true, !_bottomSheetState.value.last())
     }
 
-    private fun closeBottomSheet()  {
+    private fun closeBottomSheet() {
         _bottomSheetState.value = listOf(false, !_bottomSheetState.value.last())
     }
 
@@ -357,7 +362,35 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun favor(postId: String) = with(Utility.IOCoroutineScope) {
+        launch {
+            val actionResponse = Client.favor(_mineScreenState.value.userInfoState.username, postId)
+            try {
+                actionResponse.success!!
+            } catch (e: NullPointerException) {
+                Log.d("Exception", e.toString() + "在MineScreenVieModel的favor方法")
+            }
+            refresh(_mineScreenState.value.userInfoState.username)
+        }
+    }
+
+
+    fun cancelFavor(postId: String) = with(Utility.IOCoroutineScope) {
+        launch {
+            val actionResponse =
+                Client.cancelFavor(_mineScreenState.value.userInfoState.username, postId)
+            try {
+                actionResponse.success!!
+            } catch (e: NullPointerException) {
+                Log.d("Exception", e.toString() + "在MineScreenVieModel的favor方法")
+            }
+            refresh(_mineScreenState.value.userInfoState.username)
+        }
+    }
+
+
     fun closeDatabase() {
         mineScreenStateRepository.closeDataBase()
     }
+
 }
