@@ -95,7 +95,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val stateInDateBase = mineScreenStateRepository.getMineScreenState()
             if (stateInDateBase != null) {
-                _mineScreenState = MutableStateFlow(stateInDateBase)
+                _mineScreenState.value = stateInDateBase
             } else {
                 //第一次启动App
                 val notLogin = MineScreenState(
@@ -103,14 +103,17 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                     placeholder = 0,
                     userInfoState = DefaultUserInfoState
                 )
-                _mineScreenState = MutableStateFlow(notLogin)
                 mineScreenStateRepository.add(notLogin)
             }
-            mineScreenState = _mineScreenState.asStateFlow()
         }
     }
 
-    private lateinit var _mineScreenState: MutableStateFlow<MineScreenState>
+    private val _mineScreenState: MutableStateFlow<MineScreenState> = MutableStateFlow(
+        MineScreenState(
+        login = false,
+        placeholder = 0,
+        userInfoState = DefaultUserInfoState
+    ))
 
     private val _bottomSheetState = MutableStateFlow(listOf(false, false))
 
@@ -124,14 +127,20 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         _bottomSheetState.value = listOf(false, !_bottomSheetState.value.last())
     }
 
-    lateinit var mineScreenState: StateFlow<MineScreenState>
+    val mineScreenState: StateFlow<MineScreenState> = _mineScreenState.asStateFlow()
 
     private fun loginSuccessfully(username: String) = with(Utility.IOCoroutineScope) {
         launch {
             //登录成功说明userinfo一定存在
+            Log.d("MineScreenRefresh", "开始发送请求")
             val userInfo = Client.getUserInfo(username).userInfo!!
+            Log.d("MineScreenRefresh", "获取到userInfoResponse")
+            Log.d("MineScreenRefresh", "开始获取myPostStates")
             val postStateListSent = HomeScreenViewModel.toPostStateList(userInfo.myPosts)
+            Log.d("MineScreenRefresh", "myPostStates获取完成")
+            Log.d("MineScreenRefresh", "开始获取myCollectionsPostStates")
             val postStateCollected = HomeScreenViewModel.toPostStateList(userInfo.myCollections)
+            Log.d("MineScreenRefresh", "myCollectionsPostStates获取完成")
             val userInfoState = UserInfoState(
                 username = username,
                 nickname = userInfo.nickname!!,
@@ -143,7 +152,8 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
             val mineScreenStateLogin = MineScreenState(
                 login = true,
                 placeholder = 0,
-                userInfoState = userInfoState
+                userInfoState = userInfoState,
+                isRefreshing = false
             )
             _mineScreenState.value = mineScreenStateLogin
             mineScreenStateRepository.update(mineScreenStateLogin)
@@ -274,6 +284,22 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
             return
         }
         loginSuccessfully(username)
+    }
+
+    fun refresh() {
+        Log.d("MineScreenRefresh", "开始刷新...")
+        if (!_mineScreenState.value.login) {
+            return
+        }
+        _mineScreenState.value = MineScreenState(
+            _mineScreenState.value.id,
+            _mineScreenState.value.login,
+            _mineScreenState.value.placeholder,
+            _mineScreenState.value.userInfoState,
+            isRefreshing = true
+        )
+        loginSuccessfully(_mineScreenState.value.userInfoState.username)
+        Log.d("MineScreenRefresh", "刷新完成")
     }
 
     fun sendPost(title: String, content: String, images: List<Uri>, context: Context) {

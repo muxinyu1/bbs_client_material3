@@ -11,5 +11,6 @@ data class MineScreenState(
     @PrimaryKey val id: Int = 0,
     val login: Boolean,
     val placeholder: Int,
-    val userInfoState: UserInfoState
+    val userInfoState: UserInfoState,
+    val isRefreshing: Boolean = false
 )

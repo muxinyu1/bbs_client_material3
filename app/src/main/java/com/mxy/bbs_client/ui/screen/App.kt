@@ -3,6 +3,7 @@ package com.mxy.bbs_client.ui.screen
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,6 +27,7 @@ import com.mxy.bbs_client.ui.component.AppTopBar
 import com.mxy.bbs_client.ui.component.BottomNavigation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Plus
+import compose.icons.feathericons.RefreshCw
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -36,6 +39,7 @@ fun App(
     mineScreenViewModel: MineScreenViewModel = viewModel()
 ) {
     val appState by appViewModel.appState.collectAsState()
+    val mineScreenState by mineScreenViewModel.mineScreenState.collectAsState()
     val homeScreenState by homeScreenViewModel.homeScreenState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val bottomSheetIsOpen by mineScreenViewModel.bottomSheetState.collectAsState()
@@ -115,7 +119,49 @@ fun App(
                     FloatingActionButton(onClick = {
                         mineScreenViewModel.openBottomSheet()
                     }) {
-                        Icon(FeatherIcons.Plus, contentDescription = "Refresh")
+                        Icon(FeatherIcons.Plus, contentDescription = "add content")
+                    }
+                }
+                AnimatedVisibility(
+                    visible = appState.currentScreen == 1,
+                    enter = slideInHorizontally { (3 * it) / 2 },
+                    exit = slideOutHorizontally { (3 * it) / 2 }
+                ) {
+                    FloatingActionButton(onClick = {
+                        mineScreenViewModel.refresh()
+                    }) {
+                        var currentRotation by remember { mutableStateOf(0f) }
+                        val rotation = remember { Animatable(currentRotation) }
+                        LaunchedEffect(mineScreenState.isRefreshing) {
+                            if (mineScreenState.isRefreshing) {
+                                rotation.animateTo(
+                                    targetValue = currentRotation + 360f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = tween(3000, easing = LinearEasing)
+                                    )
+                                ) {
+                                    currentRotation = value
+                                }
+                            } else {
+                                if (currentRotation > 0f) {
+                                    // Slow down rotation on pause
+                                    rotation.animateTo(
+                                        targetValue = currentRotation + 50,
+                                        animationSpec = tween(
+                                            durationMillis = 1250,
+                                            easing = LinearOutSlowInEasing
+                                        )
+                                    ) {
+                                        currentRotation = value
+                                    }
+                                }
+                            }
+                        }
+                        Icon(
+                            FeatherIcons.RefreshCw,
+                            contentDescription = "Refresh",
+                            modifier = Modifier.rotate(currentRotation)
+                        )
                     }
                 }
             }

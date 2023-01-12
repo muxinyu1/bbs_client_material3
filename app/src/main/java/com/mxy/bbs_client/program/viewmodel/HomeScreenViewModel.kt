@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.math.log
 
 class HomeScreenViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
@@ -21,6 +22,7 @@ class HomeScreenViewModel(app: Application) : AndroidViewModel(app) {
             for (postId in postIds) {
                 val postResponse = Client.getPost(postId)
                 val userInfoResponse = Client.getUserInfo(postResponse.post!!.owner)
+                Log.d("MineScreenRefresh", "针对单个postId的请求完成")
                 val post = postResponse.post
                 val userInfo = userInfoResponse.userInfo!!
                 val reviewStateList = toReviewStateList(post.reviews)
