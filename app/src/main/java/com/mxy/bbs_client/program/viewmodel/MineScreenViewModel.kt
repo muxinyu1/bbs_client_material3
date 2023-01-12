@@ -49,11 +49,14 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: Exception) {
                 Utility.getRandomString()
             }
-            Log.d("Exception", "文件全名是$filename")
+            var prefix = FilenameUtils.getBaseName(filename)
+            if (prefix.length < 3) {
+                prefix = "${prefix}___"
+            }
+            val suffix =  FilenameUtils.getExtension(filename)
+            Log.d("Exception", "文件全名是 $filename, 前缀${FilenameUtils.getBaseName(filename)}:, 后缀: ${FilenameUtils.getExtension(filename)}")
             val file = File.createTempFile(
-                FilenameUtils.getBaseName(filename),
-                ".${FilenameUtils.getExtension(filename)
-            }")
+                prefix,suffix)
             val inputStream = context.contentResolver.openInputStream(uri)
             FileUtils.copyInputStreamToFile(inputStream, file)
             return file

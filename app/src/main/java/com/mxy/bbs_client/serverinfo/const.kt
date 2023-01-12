@@ -1,10 +1,8 @@
 package com.mxy.bbs_client.serverinfo
 
-const val serverUrl = "http://nahida8848.xyz:12345"
+const val serverUrl = "http://8.130.13.195:12345"
 
 const val jsonMediaType = "application/json"
 
-val formMediaType = "multipart/form-data; charset=utf-8"
-
-const val DefaultAvatarUrl = "http://nahida8848.xyz:8086/home/nginx_root/repo/server/avatars/default.png"
+const val DefaultAvatarUrl = "http://8.130.13.195:8086/home/nginx_root/assembled_server/server/avatars/default.png"
 
