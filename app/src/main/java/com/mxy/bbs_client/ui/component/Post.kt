@@ -171,8 +171,7 @@ private fun Post(
                             onClick = {
                                 if (mineScreenState.login) {
                                     favor = !favor
-                                    if (favor) mineScreenViewModel.favor(postId)
-                                    else mineScreenViewModel.cancelFavor(postId)
+                                    mineScreenViewModel.updateFavor(favor)
                                 } else {
                                     Toast.makeText(context, NotLoginError, Toast.LENGTH_SHORT).show()
                                 }

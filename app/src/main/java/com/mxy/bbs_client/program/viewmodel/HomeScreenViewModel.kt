@@ -20,29 +20,30 @@ class HomeScreenViewModel(app: Application) : AndroidViewModel(app) {
         fun toPostStateList(postIds: List<String>): List<PostState> {
             val res = mutableListOf<PostState>()
             for (postId in postIds) {
-                val postResponse = Client.getPost(postId)
-                val userInfoResponse = Client.getUserInfo(postResponse.post!!.owner)
-                Log.d("MineScreenRefresh", "针对单个postId的请求完成")
-                val post = postResponse.post
-                val userInfo = userInfoResponse.userInfo!!
-                val reviewStateList = toReviewStateList(post.reviews)
-                res.add(
-                    PostState(
-                        postId = postId,
-                        owner = post.owner!!,
-                        title = post.title!!,
-                        date = post.date!!,
-                        content = post.content!!,
-                        avatarUrl = userInfo.avatarUrl!!,
-                        images = post.images,
-                        likeNum = post.likeNum!!,
-                        reviewNum = post.reviews.size,
-                        nickname = userInfo.nickname!!,
-                        reviews = reviewStateList,
-                    )
-                )
+                res.add(toPostState(postId))
             }
             return res
+        }
+        fun toPostState(postId: String): PostState {
+            val postResponse = Client.getPost(postId)
+            val userInfoResponse = Client.getUserInfo(postResponse.post!!.owner)
+            Log.d("MineScreenRefresh", "针对单个postId的请求完成")
+            val post = postResponse.post
+            val userInfo = userInfoResponse.userInfo!!
+            val reviewStateList = toReviewStateList(post.reviews)
+            return PostState(
+                postId = postId,
+                owner = post.owner!!,
+                title = post.title!!,
+                date = post.date!!,
+                content = post.content!!,
+                avatarUrl = userInfo.avatarUrl!!,
+                images = post.images,
+                likeNum = post.likeNum!!,
+                reviewNum = post.reviews.size,
+                nickname = userInfo.nickname!!,
+                reviews = reviewStateList,
+            )
         }
         private fun toReviewStateList(reviewIds: List<String>): List<ReviewState> {
             val res = mutableListOf<ReviewState>()
@@ -80,24 +81,35 @@ class HomeScreenViewModel(app: Application) : AndroidViewModel(app) {
     fun refresh() = with(Utility.IOCoroutineScope) {
         launch {
             _isRefreshing.update { true }
-            _homeScreenState.value =
-                HomeScreenState(postList = toPostStateList(Client.getPostList().postIds))
-            _isRefreshing.update { false }
+            val postIds = Client.getPostList().postIds
+            val newPostList = mutableListOf<PostState>()
+            for (postId in postIds) {
+                newPostList.add(toPostState(postId))
+                _homeScreenState.update {
+                    HomeScreenState(postList = newPostList)
+                }
+                if (_isRefreshing.value) _isRefreshing.update { false }
+            }
         }
     }
 
     fun loadMore() = with(Utility.IOCoroutineScope) {
         launch {
             Log.d("mxy!!!", "正在加载更多")
-            val previousList = _homeScreenState.value.postList
+            val previousList = _homeScreenState.value.postList.toMutableList()
             val newPostIds = Client.getPostList().postIds
-            val newList = previousList + toPostStateList(newPostIds)
-            _homeScreenState.value = HomeScreenState(
-                _homeScreenState.value.postList + newList,
-                _homeScreenState.value.openedPost,
-                _homeScreenState.value.placeHolder,
-                _homeScreenState.value.postState
-            )
+            for (newPostId in newPostIds) {
+                val newPostState = toPostState(newPostId)
+                previousList.add(newPostState)
+                _homeScreenState.update {
+                    HomeScreenState(
+                        postList = previousList,
+                        openedPost = it.openedPost,
+                        placeHolder = it.placeHolder,
+                        postState = it.postState
+                    )
+                }
+            }
         }
     }
 
@@ -106,7 +118,7 @@ class HomeScreenViewModel(app: Application) : AndroidViewModel(app) {
             if (_homeScreenState.value.openedPost == null) {
                 return@launch
             }
-            val newPostState = toPostStateList(listOf(_homeScreenState.value.openedPost!!)).first()
+            val newPostState = toPostState(_homeScreenState.value.openedPost!!)
             _homeScreenState.value = HomeScreenState(
                 _homeScreenState.value.postList,
                 _homeScreenState.value.openedPost,
@@ -157,9 +169,13 @@ class HomeScreenViewModel(app: Application) : AndroidViewModel(app) {
     init {
         with(Utility.IOCoroutineScope) {
             launch {
-                _homeScreenState.value =
-                    HomeScreenState(postList = toPostStateList(Client.getPostList().postIds))
-                _isLoading.update { false }
+                val postIds = Client.getPostList().postIds
+                val postList = mutableListOf<PostState>()
+                for (postId in postIds) {
+                    postList.add(toPostState(postId))
+                    _homeScreenState.update { HomeScreenState(postList = postList) }
+                    if (_isLoading.value) _isLoading.update { false }
+                }
             }
         }
     }

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mxy.bbs_client.program.viewmodel.AppViewModel
 import com.mxy.bbs_client.program.viewmodel.HomeScreenViewModel
+import com.mxy.bbs_client.program.viewmodel.MineScreenViewModel
 import compose.icons.FeatherIcons
 import compose.icons.LineAwesomeIcons
 import compose.icons.feathericons.ArrowLeft
@@ -33,6 +34,7 @@ private const val MineScreenText = "我的"
 fun AppTopBar(
     index: Int,
     appViewModel: AppViewModel,
+    mineScreenViewModel: MineScreenViewModel,
     homeScreenViewModel: HomeScreenViewModel,
     scrollBehavior: TopAppBarScrollBehavior?
 ) {
@@ -107,19 +109,24 @@ fun AppTopBar(
             val backVisibility = homeScreenState.openedPost != null && appState.currentScreen == 0
             AnimatedVisibility(
                 visible = backVisibility,
-                enter = slideInHorizontally{-it},
-                exit = slideOutHorizontally{-it}
+                enter = slideInHorizontally { -it },
+                exit = slideOutHorizontally { -it }
             ) {
-                IconButton(onClick = { homeScreenViewModel.closePost() }) {
+                IconButton(
+                    onClick = {
+                        mineScreenViewModel.favor(homeScreenState.openedPost!!)
+                        homeScreenViewModel.closePost()
+                    }
+                ) {
                     Icon(FeatherIcons.ArrowLeft, contentDescription = "Back to Home")
                 }
             }
             AnimatedVisibility(
                 visible = !backVisibility,
-                enter = slideInHorizontally{-it},
-                exit = slideOutHorizontally{-it}
+                enter = slideInHorizontally { -it },
+                exit = slideOutHorizontally { -it }
             ) {
-                IconButton(onClick = {  }) {
+                IconButton(onClick = { }) {
                     Icon(LineAwesomeIcons.Connectdevelop, contentDescription = "App Icon")
                 }
             }

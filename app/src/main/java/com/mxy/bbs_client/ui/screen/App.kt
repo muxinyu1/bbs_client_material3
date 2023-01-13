@@ -103,6 +103,7 @@ fun App(
                 AppTopBar(
                     index = appState.currentScreen,
                     appViewModel,
+                    mineScreenViewModel,
                     homeScreenViewModel,
                     scrollBehavior = null
                 )

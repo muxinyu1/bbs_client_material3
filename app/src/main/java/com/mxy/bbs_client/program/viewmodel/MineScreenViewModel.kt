@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
@@ -23,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.io.FileUtils
@@ -110,10 +110,17 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _mineScreenState: MutableStateFlow<MineScreenState> = MutableStateFlow(
         MineScreenState(
-        login = false,
-        placeholder = 0,
-        userInfoState = DefaultUserInfoState
-    ))
+            login = false,
+            placeholder = 0,
+            userInfoState = DefaultUserInfoState
+        )
+    )
+
+    private var _hasFavored: Boolean? = null
+
+    fun updateFavor(isFavor: Boolean) {
+        _hasFavored = isFavor
+    }
 
     private val _bottomSheetState = MutableStateFlow(listOf(false, false))
 
@@ -131,31 +138,65 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun loginSuccessfully(username: String) = with(Utility.IOCoroutineScope) {
         launch {
+
             //登录成功说明userinfo一定存在
             Log.d("MineScreenRefresh", "开始发送请求")
             val userInfo = Client.getUserInfo(username).userInfo!!
             Log.d("MineScreenRefresh", "获取到userInfoResponse")
             Log.d("MineScreenRefresh", "开始获取myPostStates")
-            val postStateListSent = HomeScreenViewModel.toPostStateList(userInfo.myPosts)
-            Log.d("MineScreenRefresh", "myPostStates获取完成")
-            Log.d("MineScreenRefresh", "开始获取myCollectionsPostStates")
-            val postStateCollected = HomeScreenViewModel.toPostStateList(userInfo.myCollections)
-            Log.d("MineScreenRefresh", "myCollectionsPostStates获取完成")
             val userInfoState = UserInfoState(
                 username = username,
                 nickname = userInfo.nickname!!,
                 avatarUrl = userInfo.avatarUrl!!,
                 personalSign = userInfo.personalSign!!,
-                myPosts = postStateListSent,
-                myCollections = postStateCollected
+                myPosts = listOf(),
+                myCollections = listOf()
             )
             val mineScreenStateLogin = MineScreenState(
                 login = true,
                 placeholder = 0,
                 userInfoState = userInfoState,
-                isRefreshing = false
+                isRefreshing = true
             )
-            _mineScreenState.value = mineScreenStateLogin
+            _mineScreenState.update { mineScreenStateLogin }
+            val myPosts = mutableListOf<PostState>()
+            for (postId in userInfo.myPosts) {
+                myPosts.add(HomeScreenViewModel.toPostState(postId))
+                _mineScreenState.update {
+                    MineScreenState(
+                        login = it.login,
+                        placeholder = it.placeholder,
+                        isRefreshing = false,
+                        userInfoState = UserInfoState(
+                            it.userInfoState.username,
+                            it.userInfoState.nickname,
+                            it.userInfoState.avatarUrl,
+                            it.userInfoState.personalSign,
+                            myPosts,
+                            it.userInfoState.myCollections
+                        )
+                    )
+                }
+            }
+            val myCollections = mutableListOf<PostState>()
+            for (postId in userInfo.myCollections) {
+                myCollections.add(HomeScreenViewModel.toPostState(postId))
+                _mineScreenState.update {
+                    MineScreenState(
+                        login = it.login,
+                        placeholder = it.placeholder,
+                        isRefreshing = false,
+                        userInfoState = UserInfoState(
+                            it.userInfoState.username,
+                            it.userInfoState.nickname,
+                            it.userInfoState.avatarUrl,
+                            it.userInfoState.personalSign,
+                            it.userInfoState.myPosts,
+                            myCollections
+                        )
+                    )
+                }
+            }
             mineScreenStateRepository.update(mineScreenStateLogin)
         }
     }
@@ -388,20 +429,30 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun favor(postId: String) = with(Utility.IOCoroutineScope) {
-        launch {
-            val actionResponse = Client.favor(_mineScreenState.value.userInfoState.username, postId)
-            try {
-                actionResponse.success!!
-            } catch (e: NullPointerException) {
-                Log.d("Exception", e.toString() + "在MineScreenVieModel的favor方法")
+    fun favor(postId: String) {
+        if (_hasFavored == null) return
+        if (_hasFavored as Boolean) {
+            with(Utility.IOCoroutineScope) {
+                launch {
+                    val actionResponse =
+                        Client.favor(_mineScreenState.value.userInfoState.username, postId)
+                    try {
+                        actionResponse.success!!
+                    } catch (e: NullPointerException) {
+                        Log.d("Exception", e.toString() + "在MineScreenVieModel的favor方法")
+                    }
+                    refresh(_mineScreenState.value.userInfoState.username)
+                }
             }
-            refresh(_mineScreenState.value.userInfoState.username)
+            _hasFavored = null
+        } else {
+            cancelFavor(postId)
+            _hasFavored = null
         }
     }
 
 
-    fun cancelFavor(postId: String) = with(Utility.IOCoroutineScope) {
+    private fun cancelFavor(postId: String) = with(Utility.IOCoroutineScope) {
         launch {
             val actionResponse =
                 Client.cancelFavor(_mineScreenState.value.userInfoState.username, postId)
