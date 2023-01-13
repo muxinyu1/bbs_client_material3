@@ -122,6 +122,10 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         _hasFavored = isFavor
     }
 
+    private val _isRefreshing = MutableStateFlow(false)
+
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     private val _bottomSheetState = MutableStateFlow(listOf(false, false))
 
     val bottomSheetState = _bottomSheetState.asStateFlow()
@@ -138,7 +142,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun loginSuccessfully(username: String) = with(Utility.IOCoroutineScope) {
         launch {
-
+            _isRefreshing.update { true }
             //登录成功说明userinfo一定存在
             Log.d("MineScreenRefresh", "开始发送请求")
             val userInfo = Client.getUserInfo(username).userInfo!!
@@ -156,7 +160,6 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                 login = true,
                 placeholder = 0,
                 userInfoState = userInfoState,
-                isRefreshing = true
             )
             _mineScreenState.update { mineScreenStateLogin }
             val myPosts = mutableListOf<PostState>()
@@ -166,7 +169,6 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                     MineScreenState(
                         login = it.login,
                         placeholder = it.placeholder,
-                        isRefreshing = false,
                         userInfoState = UserInfoState(
                             it.userInfoState.username,
                             it.userInfoState.nickname,
@@ -177,6 +179,9 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                         )
                     )
                 }
+                if (_isRefreshing.value) {
+                    _isRefreshing.update { false }
+                }
             }
             val myCollections = mutableListOf<PostState>()
             for (postId in userInfo.myCollections) {
@@ -185,7 +190,6 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                     MineScreenState(
                         login = it.login,
                         placeholder = it.placeholder,
-                        isRefreshing = false,
                         userInfoState = UserInfoState(
                             it.userInfoState.username,
                             it.userInfoState.nickname,
@@ -197,7 +201,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                     )
                 }
             }
-            mineScreenStateRepository.update(mineScreenStateLogin)
+            mineScreenStateRepository.update(_mineScreenState.value)
         }
     }
 
@@ -332,12 +336,12 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
         if (!_mineScreenState.value.login) {
             return
         }
+        _isRefreshing.update { true }
         _mineScreenState.value = MineScreenState(
             _mineScreenState.value.id,
             _mineScreenState.value.login,
             _mineScreenState.value.placeholder,
             _mineScreenState.value.userInfoState,
-            isRefreshing = true
         )
         loginSuccessfully(_mineScreenState.value.userInfoState.username)
         Log.d("MineScreenRefresh", "刷新完成")

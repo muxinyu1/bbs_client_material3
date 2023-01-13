@@ -39,8 +39,8 @@ fun App(
     mineScreenViewModel: MineScreenViewModel = viewModel()
 ) {
     val appState by appViewModel.appState.collectAsState()
-    val mineScreenState by mineScreenViewModel.mineScreenState.collectAsState()
     val homeScreenState by homeScreenViewModel.homeScreenState.collectAsState()
+    val isRefreshing by mineScreenViewModel.isRefreshing.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val bottomSheetIsOpen by mineScreenViewModel.bottomSheetState.collectAsState()
     val sheetState = rememberModalBottomSheetState(
@@ -133,8 +133,8 @@ fun App(
                     }) {
                         var currentRotation by remember { mutableStateOf(0f) }
                         val rotation = remember { Animatable(currentRotation) }
-                        LaunchedEffect(mineScreenState.isRefreshing) {
-                            if (mineScreenState.isRefreshing) {
+                        LaunchedEffect(isRefreshing) {
+                            if (isRefreshing) {
                                 rotation.animateTo(
                                     targetValue = currentRotation + 360f,
                                     animationSpec = infiniteRepeatable(
@@ -145,7 +145,6 @@ fun App(
                                 }
                             } else {
                                 if (currentRotation > 0f) {
-                                    // Slow down rotation on pause
                                     rotation.animateTo(
                                         targetValue = currentRotation + 50,
                                         animationSpec = tween(
