@@ -201,6 +201,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                     )
                 }
             }
+            _isRefreshing.update { false }
             mineScreenStateRepository.update(_mineScreenState.value)
         }
     }

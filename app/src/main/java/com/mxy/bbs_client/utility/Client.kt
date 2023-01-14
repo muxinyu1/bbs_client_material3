@@ -1,13 +1,9 @@
 package com.mxy.bbs_client.utility
 
-import android.app.Application
 import android.util.Log
-import androidx.room.Room
-import coil.ImageLoader
 import com.google.gson.Gson
 import com.mxy.bbs_client.entity.action.ActionRequest
 import com.mxy.bbs_client.entity.action.ActionResponse
-import com.mxy.bbs_client.entity.post.Post
 import com.mxy.bbs_client.entity.post.PostResponse
 import com.mxy.bbs_client.entity.post.PostResponseFailedReason
 import com.mxy.bbs_client.entity.postlist.PostListResponse
@@ -16,13 +12,9 @@ import com.mxy.bbs_client.entity.review.ReviewResponseFailedReason
 import com.mxy.bbs_client.entity.user.User
 import com.mxy.bbs_client.entity.user.UserResponse
 import com.mxy.bbs_client.entity.user.UserResponseFailedReason
-import com.mxy.bbs_client.entity.userinfo.UserInfo
 import com.mxy.bbs_client.entity.userinfo.UserInfoResponse
-import com.mxy.bbs_client.program.db.CacheDatabase
-import com.mxy.bbs_client.program.repository.CacheRepository
 import com.mxy.bbs_client.serverinfo.jsonMediaType
 import com.mxy.bbs_client.serverinfo.serverUrl
-import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -57,30 +49,15 @@ object Client {
     private val gson by lazy {
         Gson()
     }
-
     fun getUser(username: String?): UserResponse {
         if (username == null) {
             return UserResponse(false, UserResponseFailedReason.USERNAME_DOES_NOT_EXIST, null)
         }
-//        val localUser = cacheRepository.getUser(username)
-//        if (localUser != null) {
-//            Log.d("缓存", "本地存在${gson.toJson(localUser)}")
-//            return UserResponse(true, null, localUser)
-//        }
         val requestBody =
             gson.toJson(User(username, null)).toRequestBody(jsonMediaType.toMediaType())
         val request = Request.Builder().url("$serverUrl/user/query").post(requestBody).build()
         val userResponse = client.newCall(request).execute()
-        val remoteUserResponse =
-            gson.fromJson(userResponse.body?.string(), UserResponse::class.java)
-//        if (remoteUserResponse.success!!) {
-//            try {
-//                cacheRepository.addUser(remoteUserResponse.user!!)
-//            } catch (e: Exception) {
-//                Log.d("Client", "被捕获的异常: $e")
-//            }
-//        }
-        return remoteUserResponse
+        return gson.fromJson(userResponse.body?.string(), UserResponse::class.java)
     }
 
     fun getPostList(): PostListResponse {
