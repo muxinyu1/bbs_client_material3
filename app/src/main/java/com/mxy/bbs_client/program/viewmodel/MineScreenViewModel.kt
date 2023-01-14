@@ -60,7 +60,7 @@ class MineScreenViewModel(app: Application) : AndroidViewModel(app) {
                 }"
             )
             val file = File.createTempFile(
-                prefix, suffix
+                prefix, ".$suffix"
             )
             val inputStream = context.contentResolver.openInputStream(uri)
             FileUtils.copyInputStreamToFile(inputStream, file)
