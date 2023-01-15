@@ -207,7 +207,6 @@ private fun ImagesSet(
             }
         }
         items(imageList) {
-            //TODO:选择的图片应该改成圆角的
             SubcomposeAsyncImage(
                 model = it,
                 contentDescription = "post or review img",
