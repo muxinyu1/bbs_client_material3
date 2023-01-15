@@ -213,9 +213,9 @@ private fun ImagesSet(
                 contentDescription = "post or review img",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(95.dp)
-                    .clip(RoundedCornerShape(10.dp))
                     .padding(10.dp)
+                    .size(75.dp)
+                    .clip(RoundedCornerShape(10.dp))
             ) {
                 val state = painter.state
                 if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
